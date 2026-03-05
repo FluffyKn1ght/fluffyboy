@@ -1500,7 +1500,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xB3: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high | cpu->de.low) ? 1 : 0;
 
@@ -1512,7 +1511,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xB4: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high | cpu->hl.high) ? 1 : 0;
 
@@ -1524,7 +1522,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xB5: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high | cpu->hl.low) ? 1 : 0;
 
@@ -1536,7 +1533,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xB6: {
             flags->byte = 0;
-            flags->h = 1;
             uint8_t value = mem_read(mem, cpu->hl.word);
 
             flags->z = (cpu->af.high | value) ? 1 : 0;
@@ -1549,7 +1545,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xF6: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high | imm8) ? 1 : 0;
 
@@ -1606,7 +1601,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xAB: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high ^ cpu->de.low) ? 1 : 0;
 
@@ -1618,7 +1612,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xAC: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high ^ cpu->hl.high) ? 1 : 0;
 
@@ -1630,7 +1623,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xAD: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high ^ cpu->hl.low) ? 1 : 0;
 
@@ -1642,7 +1634,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xAE: {
             flags->byte = 0;
-            flags->h = 1;
             uint8_t value = mem_read(mem, cpu->hl.word);
 
             flags->z = (cpu->af.high ^ value) ? 1 : 0;
@@ -1655,7 +1646,6 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xEE: {
             flags->byte = 0;
-            flags->h = 1;
 
             flags->z = (cpu->af.high ^ imm8) ? 1 : 0;
 
