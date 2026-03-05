@@ -21,7 +21,7 @@ typedef union {
         bool z: 1, n: 1, h: 1, c: 1;
     };
     uint8_t byte;
-} cpu_f_register;
+} cpu_f_register_t;
 
 typedef struct {
     int8_t cycles;

@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -24,6 +25,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
     uint8_t imm8 = mem_read(mem, cpu->pc);
     uint16_t imm16 = mem_readw(mem, cpu->pc);
+    cpu_f_register_t* flags = (cpu_f_register_t*)&cpu;
 
     cpu->result.cycles = -1;
     cpu->result.size = 1;
@@ -703,11 +705,11 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0xF8: {
-            cpu->af.low = 0;
+            flags->byte = 0;
             cpu->pc++;
 
-            ((cpu_f_register*)&cpu->af.low)->h = ((cpu->sp & 0xF + ((int8_t)imm8)) & 0x10) ? 1 : 0;
-            ((cpu_f_register*)&cpu->af.low)->c = ((cpu->sp + ((int8_t)imm8)) & 0x10000) ? 1 : 0;
+            flags->h = ((cpu->sp & 0xF + ((int8_t)imm8)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->sp + ((int8_t)imm8)) & 0x10000) ? 1 : 0;
 
             cpu->hl.word = cpu->sp + ((int8_t)imm8);
 
@@ -780,6 +782,888 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->result.cycles = 12;
             sprintf(cpu->result.disasm, "pop hl");
+            break;
+        }
+        case 0x87: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->af.high) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->af.high) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->af.high) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->af.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add a");
+            break;
+        }
+        case 0x80: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->bc.high) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.high) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.high) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->bc.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add b");
+            break;
+        }
+        case 0x81: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->bc.low) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.low) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.low) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->bc.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add c");
+            break;
+        }
+        case 0x82: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->de.high) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.high) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.high) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->de.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add d");
+            break;
+        }
+        case 0x83: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->de.low) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.low) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.low) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->de.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add e");
+            break;
+        }
+        case 0x84: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->hl.high) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.high) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.high) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->hl.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add h");
+            break;
+        }
+        case 0x85: {
+            flags->byte = 0;
+            if ((cpu->af.high + cpu->hl.low) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.low) & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.low) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->hl.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "add l");
+            break;
+        }
+        case 0x86: {
+            flags->byte = 0;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+
+            if ((cpu->af.high + value) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + (value & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + value) & 0x10000) ? 1 : 0;
+            cpu->af.high += value;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "add [hl]");
+            break;
+        }
+        case 0xC6: {
+            flags->byte = 0;
+            cpu->pc++;
+            if ((cpu->af.high + imm8) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + (imm8 & 0xF)) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + imm8) & 0x10000) ? 1 : 0;
+            cpu->af.high += imm8;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "add 0x%X", imm8);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x8F: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->af.high + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->af.high) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->af.high + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->af.high + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc a");
+            break;
+        }
+        case 0x88: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->bc.high + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.high) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.high + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->bc.high + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc b");
+            break;
+        }
+        case 0x89: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->bc.low + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.low) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.low + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->bc.low + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc c");
+            break;
+        }
+        case 0x8A: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->de.high + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.high) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.high + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->de.high + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc d");
+            break;
+        }
+        case 0x8B: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->de.low + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.low) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.low + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->de.low + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc e");
+            break;
+        }
+        case 0x8C: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->hl.high + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.high) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.high + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->hl.high + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc h");
+            break;
+        }
+        case 0x8D: {
+            flags->byte = 0;
+            bool carry = flags->c;
+
+            if ((cpu->af.high + cpu->hl.low + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.low) & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.low + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += cpu->hl.low + carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "adc l");
+            break;
+        }
+        case 0x8E: {
+            flags->byte = 0;
+            bool carry = flags->c;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+
+            if ((cpu->af.high + value + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + (value & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + value + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += value + carry;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "adc [hl]");
+            break;
+        }
+        case 0xCE: {
+            flags->byte = 0;
+            bool carry = flags->c;
+            cpu->pc++;
+
+            if ((cpu->af.high + imm8 + carry) == 0) {
+                flags->z = 1;
+            }
+            flags->h = ((((cpu->af.high) & 0xF) + (imm8 & 0xF) + carry) & 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + imm8 + carry) & 0x10000) ? 1 : 0;
+            cpu->af.high += imm8 + carry;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "adc 0x%X", imm8);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x97: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->af.high) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->af.high) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->af.high) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->af.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub a");
+            break;
+        }
+        case 0x90: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->bc.high) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->bc.high) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->bc.high) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->bc.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub b");
+            break;
+        }
+        case 0x91: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->bc.low) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->bc.low) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->bc.low) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->bc.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub c");
+            break;
+        }
+        case 0x92: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->de.high) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->de.high) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->de.high) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->de.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub d");
+            break;
+        }
+        case 0x93: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->de.low) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->de.low) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->de.low) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->de.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub e");
+            break;
+        }
+        case 0x94: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->hl.high) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->hl.high) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->hl.high) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->hl.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub h");
+            break;
+        }
+        case 0x95: {
+            flags->byte = 0;
+            flags->n = 1;
+
+            if ((cpu->af.high - cpu->hl.low) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->hl.low) & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->hl.low) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->hl.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sub l");
+            break;
+        }
+        case 0x96: {
+            flags->byte = 0;
+            flags->n = 1;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+
+            if ((cpu->af.high - value) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - (value & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - value) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= value;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "sub [hl]");
+            break;
+        }
+        case 0xD6: {
+            flags->byte = 0;
+            flags->n = 1;
+            cpu->pc++;
+
+            if (cpu->af.high - imm8 == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - (imm8 & 0xF))) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - imm8) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= imm8;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "sub 0x%X", imm8);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x9F: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->af.high - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->af.high) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->af.high - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->af.high - carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc a");
+            break;
+        }
+        case 0x98: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->bc.high - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->bc.high) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->bc.high - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->bc.high - carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc b");
+            break;
+        }
+        case 0x99: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->bc.low - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->bc.low) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->bc.low - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->bc.low - carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc c");
+            break;
+        }
+        case 0x9A: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->de.high - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->de.high) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->de.high - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->de.high - carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc d");
+            break;
+        }
+        case 0x9B: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->de.low - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->de.low) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->de.low - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->de.low - carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc e");
+            break;
+        }
+        case 0x9C: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->hl.high - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->hl.high) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->hl.high - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->hl.high - carry;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc h");
+            break;
+        }
+        case 0x9D: {
+            flags->byte = 0;
+            flags->n = 1;
+            bool carry = flags->c;
+
+            if ((cpu->af.high - cpu->hl.low - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - ((cpu->hl.low) & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - cpu->hl.low - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= cpu->hl.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "sbc l");
+            break;
+        }
+        case 0x9E: {
+            flags->byte = 0;
+            flags->n = 1;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+            bool carry = flags->c;
+
+            if ((cpu->af.high - value - carry) == 0) {
+                flags->z = 1;
+            }
+
+            flags->h = (((((cpu->af.high) & 0xF) - (value & 0xF)) - carry) < ((cpu->af.high) & 0xF)) ? 1 : 0;
+            flags->c = ((cpu->af.high - value - carry) < cpu->af.high) ? 1 : 0;
+
+            cpu->af.high -= value - carry;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "sbc [hl]");
+            break;
+        }
+        case 0xA7: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->af.high) ? 1 : 0;
+
+            cpu->af.high &= cpu->af.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and a");
+            break;
+        }
+        case 0xA0: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->bc.high) ? 1 : 0;
+
+            cpu->af.high &= cpu->bc.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and b");
+            break;
+        }
+        case 0xA1: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->bc.low) ? 1 : 0;
+
+            cpu->af.high &= cpu->bc.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and c");
+            break;
+        }
+        case 0xA2: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->de.high) ? 1 : 0;
+
+            cpu->af.high &= cpu->de.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and d");
+            break;
+        }
+        case 0xA3: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->de.low) ? 1 : 0;
+
+            cpu->af.high &= cpu->de.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and e");
+            break;
+        }
+        case 0xA4: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->hl.high) ? 1 : 0;
+
+            cpu->af.high &= cpu->hl.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and h");
+            break;
+        }
+        case 0xA5: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & cpu->hl.low) ? 1 : 0;
+
+            cpu->af.high &= cpu->hl.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and l");
+            break;
+        }
+        case 0xA6: {
+            flags->byte = 0;
+            flags->h = 1;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+
+            flags->z = (cpu->af.high & value) ? 1 : 0;
+
+            cpu->af.high &= value;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and [hl]");
+            break;
+        }
+        case 0xE6: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high & imm8) ? 1 : 0;
+
+            cpu->af.high &= imm8;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "and 0x%X", imm8);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0xB7: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high | cpu->af.high) ? 1 : 0;
+
+            cpu->af.high |= cpu->af.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or a");
+            break;
+        }
+        case 0xB0: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high | cpu->bc.high) ? 1 : 0;
+
+            cpu->af.high |= cpu->bc.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or b");
+            break;
+        }
+        case 0xB1: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high | cpu->bc.low) ? 1 : 0;
+
+            cpu->af.high |= cpu->bc.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or c");
+            break;
+        }
+        case 0xB2: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high | cpu->de.high) ? 1 : 0;
+
+            cpu->af.high |= cpu->de.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or d");
+            break;
+        }
+        case 0xB3: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high | cpu->de.low) ? 1 : 0;
+
+            cpu->af.high |= cpu->de.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or e");
+            break;
+        }
+        case 0xB4: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high | cpu->hl.high) ? 1 : 0;
+
+            cpu->af.high |= cpu->hl.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or h");
+            break;
+        }
+        case 0xB5: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high | cpu->hl.low) ? 1 : 0;
+
+            cpu->af.high |= cpu->hl.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or l");
+            break;
+        }
+        case 0xB6: {
+            flags->byte = 0;
+            flags->h = 1;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+
+            flags->z = (cpu->af.high | value) ? 1 : 0;
+
+            cpu->af.high |= value;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or [hl]");
+            break;
+        }
+        case 0xF6: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high | imm8) ? 1 : 0;
+
+            cpu->af.high |= imm8;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "or 0x%X", imm8);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0xAF: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high ^ cpu->af.high) ? 1 : 0;
+
+            cpu->af.high ^= cpu->af.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor a");
+            break;
+        }
+        case 0xA8: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high ^ cpu->bc.high) ? 1 : 0;
+
+            cpu->af.high ^= cpu->bc.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor b");
+            break;
+        }
+        case 0xA9: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high ^ cpu->bc.low) ? 1 : 0;
+
+            cpu->af.high ^= cpu->bc.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor c");
+            break;
+        }
+        case 0xAA: {
+            flags->byte = 0;
+
+            flags->z = (cpu->af.high ^ cpu->de.high) ? 1 : 0;
+
+            cpu->af.high ^= cpu->de.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor d");
+            break;
+        }
+        case 0xAB: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high ^ cpu->de.low) ? 1 : 0;
+
+            cpu->af.high ^= cpu->de.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor e");
+            break;
+        }
+        case 0xAC: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high ^ cpu->hl.high) ? 1 : 0;
+
+            cpu->af.high ^= cpu->hl.high;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor h");
+            break;
+        }
+        case 0xAD: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high ^ cpu->hl.low) ? 1 : 0;
+
+            cpu->af.high ^= cpu->hl.low;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor l");
+            break;
+        }
+        case 0xAE: {
+            flags->byte = 0;
+            flags->h = 1;
+            uint8_t value = mem_read(mem, cpu->hl.word);
+
+            flags->z = (cpu->af.high ^ value) ? 1 : 0;
+
+            cpu->af.high ^= value;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor [hl]");
+            break;
+        }
+        case 0xEE: {
+            flags->byte = 0;
+            flags->h = 1;
+
+            flags->z = (cpu->af.high ^ imm8) ? 1 : 0;
+
+            cpu->af.high ^= imm8;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "xor 0x%X", imm8);
+            cpu->result.size = 2;
             break;
         }
         default: {
