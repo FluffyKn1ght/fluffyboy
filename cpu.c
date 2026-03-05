@@ -708,8 +708,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             flags->byte = 0;
             cpu->pc++;
 
-            flags->h = ((cpu->sp & 0xF + ((int8_t)imm8)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->sp + ((int8_t)imm8)) & 0x10000) ? 1 : 0;
+            flags->h = ((cpu->sp & 0xF + ((int8_t)imm8)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->sp + ((int8_t)imm8)) >= 0x10000) ? 1 : 0;
 
             cpu->hl.word = cpu->sp + ((int8_t)imm8);
 
@@ -789,8 +789,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->af.high) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->af.high) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->af.high) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->af.high) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->af.high) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->af.high;
 
             cpu->result.cycles = 4;
@@ -802,8 +802,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->bc.high) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.high) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->bc.high) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.high) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.high) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->bc.high;
 
             cpu->result.cycles = 4;
@@ -815,8 +815,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->bc.low) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.low) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->bc.low) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.low) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.low) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->bc.low;
 
             cpu->result.cycles = 4;
@@ -828,8 +828,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->de.high) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.high) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->de.high) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.high) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.high) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->de.high;
 
             cpu->result.cycles = 4;
@@ -841,8 +841,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->de.low) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.low) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->de.low) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.low) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.low) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->de.low;
 
             cpu->result.cycles = 4;
@@ -854,8 +854,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->hl.high) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.high) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->hl.high) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.high) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.high) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->hl.high;
 
             cpu->result.cycles = 4;
@@ -867,8 +867,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->hl.low) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.low) & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->hl.low) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.low) & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.low) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->hl.low;
 
             cpu->result.cycles = 4;
@@ -882,8 +882,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + value) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + (value & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + value) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + (value & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + value) >= 0x10000) ? 1 : 0;
             cpu->af.high += value;
 
             cpu->result.cycles = 8;
@@ -896,8 +896,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + imm8) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + (imm8 & 0xF)) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + imm8) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + (imm8 & 0xF)) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + imm8) >= 0x10000) ? 1 : 0;
             cpu->af.high += imm8;
 
             cpu->result.cycles = 8;
@@ -912,8 +912,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->af.high + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->af.high) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->af.high + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->af.high) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->af.high + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->af.high + carry;
 
             cpu->result.cycles = 4;
@@ -927,8 +927,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->bc.high + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.high) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->bc.high + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.high) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.high + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->bc.high + carry;
 
             cpu->result.cycles = 4;
@@ -942,8 +942,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->bc.low + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.low) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->bc.low + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->bc.low) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->bc.low + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->bc.low + carry;
 
             cpu->result.cycles = 4;
@@ -957,8 +957,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->de.high + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.high) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->de.high + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.high) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.high + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->de.high + carry;
 
             cpu->result.cycles = 4;
@@ -972,8 +972,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->de.low + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.low) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->de.low + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->de.low) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->de.low + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->de.low + carry;
 
             cpu->result.cycles = 4;
@@ -987,8 +987,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->hl.high + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.high) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->hl.high + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.high) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.high + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->hl.high + carry;
 
             cpu->result.cycles = 4;
@@ -1002,8 +1002,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + cpu->hl.low + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.low) & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + cpu->hl.low + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + ((cpu->hl.low) & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + cpu->hl.low + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += cpu->hl.low + carry;
 
             cpu->result.cycles = 4;
@@ -1018,8 +1018,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + value + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + (value & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + value + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + (value & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + value + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += value + carry;
 
             cpu->result.cycles = 8;
@@ -1034,8 +1034,8 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             if ((cpu->af.high + imm8 + carry) == 0) {
                 flags->z = 1;
             }
-            flags->h = ((((cpu->af.high) & 0xF) + (imm8 & 0xF) + carry) & 0x10) ? 1 : 0;
-            flags->c = ((cpu->af.high + imm8 + carry) & 0x10000) ? 1 : 0;
+            flags->h = ((((cpu->af.high) & 0xF) + (imm8 & 0xF) + carry) >= 0x10) ? 1 : 0;
+            flags->c = ((cpu->af.high + imm8 + carry) >= 0x10000) ? 1 : 0;
             cpu->af.high += imm8 + carry;
 
             cpu->result.cycles = 8;
@@ -1770,7 +1770,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x3C: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->af.high & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->af.high & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->af.high++;
             flags->z = (cpu->af.high == 0x00) ? 1 : 0;
 
@@ -1781,7 +1781,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x04: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->bc.high & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->bc.high & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->bc.high++;
             flags->z = (cpu->bc.high == 0x00) ? 1 : 0;
 
@@ -1792,7 +1792,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x0C: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->bc.low & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->bc.low & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->bc.low++;
             flags->z = (cpu->bc.low == 0x00) ? 1 : 0;
 
@@ -1803,7 +1803,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x14: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->de.high & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->de.high & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->de.high++;
             flags->z = (cpu->de.high == 0x00) ? 1 : 0;
 
@@ -1814,7 +1814,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x1C: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->de.low & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->de.low & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->de.low++;
             flags->z = (cpu->de.low == 0x00) ? 1 : 0;
 
@@ -1825,7 +1825,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x24: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->hl.high & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->hl.high & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->hl.high++;
             flags->z = (cpu->hl.high == 0x00) ? 1 : 0;
 
@@ -1836,7 +1836,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
         case 0x2C: {
             flags->byte &= 0x10;
 
-            flags->h = (((cpu->hl.low & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((cpu->hl.low & 0xF) + 1) >= 0x10) ? 1 : 0;
             cpu->hl.low++;
             flags->z = (cpu->hl.low == 0x00) ? 1 : 0;
 
@@ -1848,7 +1848,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             flags->byte &= 0x10;
             uint8_t value = mem_read(mem, cpu->hl.word);
 
-            flags->h = (((value & 0xF) + 1) & 0x10) ? 1 : 0;
+            flags->h = (((value & 0xF) + 1) >= 0x10) ? 1 : 0;
             value++;
             flags->z = (value == 0x00) ? 1 : 0;
 
