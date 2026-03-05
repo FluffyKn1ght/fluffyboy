@@ -708,8 +708,13 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             flags->byte = 0;
             cpu->pc++;
 
-            flags->h = ((cpu->sp & 0xF + ((int8_t)imm8)) >= 0x10) ? 1 : 0;
-            flags->c = ((cpu->sp + ((int8_t)imm8)) >= 0x10000) ? 1 : 0;
+            if ((int8_t)imm8 >= 0) {
+                flags->h = ((cpu->sp & 0xF + ((int8_t)imm8) & 0xF) >= 0x10) ? 1 : 0;
+                flags->c = ((cpu->sp + ((int8_t)imm8)) >= 0x10000) ? 1 : 0;
+            } else {
+                flags->h = (((cpu->sp & 0xF) + ((int8_t)imm8) & 0xF) < (cpu->sp & 0xF)) ? 1 : 0;
+                flags->c = ((cpu->sp + ((int8_t)imm8)) < (cpu->sp)) ? 1 : 0;
+            }
 
             cpu->hl.word = cpu->sp + ((int8_t)imm8);
 
