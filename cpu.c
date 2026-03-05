@@ -1949,6 +1949,54 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             sprintf(cpu->result.disasm, "dec [hl]");
             break;
         }
+        case 0x09: {
+            flags->byte &= 0x80;
+
+            flags->h = (((cpu->hl.word & 0xFFF) + (cpu->bc.word & 0xFFF)) >= 0x1000) ? 1 : 0;
+            flags->c = ((cpu->hl.word + cpu->bc.word) >= 0x10000) ? 1 : 0;
+
+            cpu->hl.word += cpu->bc.word;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "add hl, bc");
+            break;
+        }
+        case 0x19: {
+            flags->byte &= 0x80;
+
+            flags->h = (((cpu->hl.word & 0xFFF) + (cpu->de.word & 0xFFF)) >= 0x1000) ? 1 : 0;
+            flags->c = ((cpu->hl.word + cpu->de.word) >= 0x10000) ? 1 : 0;
+
+            cpu->hl.word += cpu->de.word;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "add hl, de");
+            break;
+        }
+        case 0x29: {
+            flags->byte &= 0x80;
+
+            flags->h = (((cpu->hl.word & 0xFFF) + (cpu->hl.word & 0xFFF)) >= 0x1000) ? 1 : 0;
+            flags->c = ((cpu->hl.word + cpu->hl.word) >= 0x10000) ? 1 : 0;
+
+            cpu->hl.word += cpu->hl.word;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "add hl, hl");
+            break;
+        }
+        case 0x39: {
+            flags->byte &= 0x80;
+
+            flags->h = (((cpu->hl.word & 0xFFF) + (cpu->sp & 0xFFF)) >= 0x1000) ? 1 : 0;
+            flags->c = ((cpu->hl.word + cpu->sp) >= 0x10000) ? 1 : 0;
+
+            cpu->hl.word += cpu->sp;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "add hl, sp");
+            break;
+        }
         default: {
             sprintf(cpu->result.disasm, "unknown opcode 0x%X", opcode);
             break;
