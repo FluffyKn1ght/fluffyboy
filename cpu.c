@@ -4,6 +4,8 @@
 #include <stdio.h>
 
 void cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
+    // Adds a value onto the top of the stack and decrements SP twice.
+
     cpu->sp--;
     mem_write(mem, cpu->sp, value & 0xFF);
     cpu->sp--;
@@ -11,6 +13,8 @@ void cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
 }
 
 uint16_t cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
+    // Returns a value from the top of the stack and increments SP twice.
+
     uint16_t value = mem_readw(mem, cpu->sp);
     cpu->sp += 2;
     return value;
@@ -30,6 +34,20 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
     cpu->result.cycles = -1;
     cpu->result.size = 1;
     cpu->result.disasm = "????????";
+
+    if (cpu->ei_state == ARMED) {
+        cpu->ei_state = ACTIVE;
+    } else if (cpu->ei_state == ACTIVE) {
+        cpu->ei_state = NOT_ARMED;
+        cpu->ime = true;
+    }
+
+    if (cpu->halted) {
+        // TODO: Implement interrupt checking
+        cpu->result.cycles = 1;
+        cpu->result.size = 0;
+        return;
+    }
 
     switch (opcode) {
         case 0x06: {
@@ -2076,6 +2094,231 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "dec sp");
             break;
+        }
+        case 0x27: {
+            if (cpu->af.high == 0) {
+                flags->byte &= 0x40;
+                flags->z = 1;
+            } else {
+                int8_t adjust = 0;
+                bool carry = false;
+
+                if (!flags->n) {
+                    // Addition
+                    if (((cpu->af.high & 0xF) > 0x9) || flags->h) {
+                        adjust += 0x6;
+                    }
+                    if (((cpu->af.high & 0xF0) > 0x90) || flags->c) {
+                        carry = true;
+                        adjust += 0x60;
+                    }
+                } else {
+                    // Subtraction
+                    if (((cpu->af.high & 0xF) > 0x9) || flags->h) {
+                        adjust -= 0x6;
+                    }
+                    if (((cpu->af.high & 0xF0) > 0x90) || flags->c) {
+                        carry = true;
+                        adjust -= 0x60;
+                    }
+                }
+
+                flags->byte &= 0x40;
+                flags->c = carry;
+                flags->z = (cpu->af.high == 0) ? 1 : 0;
+                cpu->af.high += adjust;
+            }
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "daa");
+            break;
+        }
+        case 0x2F: {
+            flags->n = 1;
+            flags->h = 1;
+            cpu->af.high = ~(cpu->af.high);
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "cpl");
+            break;
+        }
+        case 0x3F: {
+            flags->n = 0;
+            flags->h = 0;
+            flags->c = !flags->c;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "ccf");
+            break;
+        }
+        case 0x37: {
+            flags->n = 0;
+            flags->h = 0;
+            flags->c = 1;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "scf");
+            break;
+        }
+        case 0x00: {
+            // *insert careless fox noises*
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "nop");
+            break;
+        }
+        case 0x76: {
+            // *insert bored fox noises*
+
+            cpu->halted = true;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "halt");
+            break;
+        }
+        case 0x10: {
+            // *insert sleeping fox noises*
+
+            // TODO: Make sure this arse pain of an opcode is implemented properly...
+
+            cpu->stopped = true;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "stop");
+            break;
+        }
+        case 0xF3: {
+            // TODO: Figure out if this needs the same "arming" treatment as EI
+            cpu->ime = false;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "di");
+            break;
+        }
+        case 0xFB: {
+            cpu->ei_state = ARMED;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "ei");
+            break;
+        }
+        case 0xCB: {
+            cpu->result.size = 2;
+            uint8_t opcode2 = mem_read(mem, cpu->pc);
+            cpu->pc++;
+
+            switch (opcode2) {
+                case 0x37: {
+                    flags->byte = 0;
+                    flags->z = (cpu->af.high == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->af.high) & 0xF;
+                    uint8_t upper_nibble = ((cpu->af.high) & 0xF0) >> 4;
+
+                    cpu->af.high = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap a");
+                    break;
+                }
+                case 0x30: {
+                    flags->byte = 0;
+                    flags->z = (cpu->bc.high == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->bc.high) & 0xF;
+                    uint8_t upper_nibble = ((cpu->bc.high) & 0xF0) >> 4;
+
+                    cpu->bc.high = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap b");
+                    break;
+                }
+                case 0x31: {
+                    flags->byte = 0;
+                    flags->z = (cpu->bc.low == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->bc.low) & 0xF;
+                    uint8_t upper_nibble = ((cpu->bc.low) & 0xF0) >> 4;
+
+                    cpu->bc.low = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap c");
+                    break;
+                }
+                case 0x32: {
+                    flags->byte = 0;
+                    flags->z = (cpu->de.high == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->de.high) & 0xF;
+                    uint8_t upper_nibble = ((cpu->de.high) & 0xF0) >> 4;
+
+                    cpu->de.high = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap d");
+                    break;
+                }
+                case 0x33: {
+                    flags->byte = 0;
+                    flags->z = (cpu->de.low == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->de.low) & 0xF;
+                    uint8_t upper_nibble = ((cpu->de.low) & 0xF0) >> 4;
+
+                    cpu->de.low = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap e");
+                    break;
+                }
+                case 0x34: {
+                    flags->byte = 0;
+                    flags->z = (cpu->hl.high == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->hl.high) & 0xF;
+                    uint8_t upper_nibble = ((cpu->hl.high) & 0xF0) >> 4;
+
+                    cpu->hl.high = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap h");
+                    break;
+                }
+                case 0x35: {
+                    flags->byte = 0;
+                    flags->z = (cpu->hl.low == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (cpu->hl.low) & 0xF;
+                    uint8_t upper_nibble = ((cpu->hl.low) & 0xF0) >> 4;
+
+                    cpu->hl.low = (lower_nibble << 4) | upper_nibble;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "swap l");
+                    break;
+                }
+                case 0x36: {
+                    uint8_t value = mem_read(mem, value);
+                    flags->byte = 0;
+                    flags->z = (value == 0) ? 1 : 0;
+
+                    uint8_t lower_nibble = (value) & 0xF;
+                    uint8_t upper_nibble = ((value) & 0xF0) >> 4;
+
+                    value = (lower_nibble << 4) | upper_nibble;
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "swap [hl]");
+                    break;
+                }
+                default: {
+                    sprintf(cpu->result.disasm, "unknown opcode 0x%X 0x%X", opcode, opcode2);
+                    break;
+                }
+            }
         }
         default: {
             sprintf(cpu->result.disasm, "unknown opcode 0x%X", opcode);

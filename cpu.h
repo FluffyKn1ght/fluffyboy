@@ -34,8 +34,8 @@ typedef struct {
     uint16_t pc;
     uint16_t sp;
     bool ime;
-    cpu_arm_state_t halted;
     cpu_arm_state_t ei_state;
+    bool halted;
     bool stopped;
     cpu_result_t result;
 } cpu_state_t;
