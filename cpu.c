@@ -1437,7 +1437,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->af.high &= value;
 
-            cpu->result.cycles = 4;
+            cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "and [hl]");
             break;
         }
@@ -1449,7 +1449,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->af.high &= imm8;
 
-            cpu->result.cycles = 4;
+            cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "and 0x%X", imm8);
             cpu->result.size = 2;
             break;
@@ -1539,7 +1539,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->af.high |= value;
 
-            cpu->result.cycles = 4;
+            cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "or [hl]");
             break;
         }
@@ -1550,7 +1550,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->af.high |= imm8;
 
-            cpu->result.cycles = 4;
+            cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "or 0x%X", imm8);
             cpu->result.size = 2;
             break;
@@ -1640,7 +1640,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->af.high ^= value;
 
-            cpu->result.cycles = 4;
+            cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "xor [hl]");
             break;
         }
@@ -1651,7 +1651,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->af.high ^= imm8;
 
-            cpu->result.cycles = 4;
+            cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "xor 0x%X", imm8);
             cpu->result.size = 2;
             break;
