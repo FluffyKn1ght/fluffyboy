@@ -719,7 +719,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             cpu->hl.word = cpu->sp + ((int8_t)imm8);
 
             cpu->result.cycles = 12;
-            sprintf(cpu->result.disasm, "ld hl, sp+(0x%X)", ((int8_t)imm8));
+            sprintf(cpu->result.disasm, "ld hl, sp+(%d)", ((int8_t)imm8));
             cpu->result.size = 2;
             break;
         }
@@ -2000,6 +2000,81 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
             cpu->result.cycles = 8;
             sprintf(cpu->result.disasm, "add hl, sp");
+            break;
+        }
+        case 0xE8: {
+            flags->byte = 0;
+            cpu->pc++;
+
+            if ((int8_t)imm8 >= 0) {
+                flags->h = ((cpu->sp & 0xF + ((int8_t)imm8) & 0xF) >= 0x10) ? 1 : 0;
+                flags->c = ((cpu->sp + ((int8_t)imm8)) >= 0x10000) ? 1 : 0;
+            } else {
+                flags->h = (((cpu->sp & 0xF) + ((int8_t)imm8) & 0xF) < (cpu->sp & 0xF)) ? 1 : 0;
+                flags->c = ((cpu->sp + ((int8_t)imm8)) < (cpu->sp)) ? 1 : 0;
+            }
+
+            cpu->sp += (int8_t)imm8;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "add sp, %d", (int8_t)imm8);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x03: {
+            cpu->bc.word++;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "inc bc");
+            break;
+        }
+        case 0x13: {
+            cpu->de.word++;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "inc de");
+            break;
+        }
+        case 0x23: {
+            cpu->hl.word++;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "inc hl");
+            break;
+        }
+        case 0x33: {
+            cpu->sp++;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "inc sp");
+            break;
+        }
+        case 0x0B: {
+            cpu->bc.word--;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "dec bc");
+            break;
+        }
+        case 0x1B: {
+            cpu->de.word--;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "dec de");
+            break;
+        }
+        case 0x2B: {
+            cpu->hl.word--;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "dec hl");
+            break;
+        }
+        case 0x3B: {
+            cpu->sp--;
+
+            cpu->result.cycles = 8;
+            sprintf(cpu->result.disasm, "dec sp");
             break;
         }
         default: {
