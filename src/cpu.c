@@ -3259,6 +3259,302 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
                     sprintf(cpu->result.disasm, "srl [hl]");
                     break;
                 }
+                case 0x47: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->af.high >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, a", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x40: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->bc.high >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, b", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x41: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->bc.low >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, c", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x42: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->de.high >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, d", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x43: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->de.low >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, e", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x44: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->hl.high >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, h", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x45: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((cpu->hl.low >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "bit %d, l", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x46: {
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    flags->byte &= 0x10;
+                    flags->h = true;
+
+                    flags->z = ((value >> bit) & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "bit %d, [hl]", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC7: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->af.high |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, a", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC0: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->bc.high |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, b", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC1: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->bc.low |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, c", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC2: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->de.high |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, d", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC3: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->de.low |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, e", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC4: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->hl.high |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, h", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC5: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->hl.low |= (1 << bit);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "set %d, l", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0xC6: {
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    value |= (1 << bit);
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "set %d, [hl]", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x87: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->af.high &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, a", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x80: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->bc.high &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, b", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x81: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->bc.low &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, c", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x82: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->de.high &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, d", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x83: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->de.low &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, e", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x84: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->hl.high &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, h", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x85: {
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    cpu->hl.low &= (~(1 << bit)) & 0xFF;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "res %d, l", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
+                case 0x86: {
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint8_t bit = mem_read(mem, cpu->pc) & 0x7;
+                    cpu->pc++;
+
+                    value &= (~(1 << bit)) & 0xFF;
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "res %d, [hl]", bit);
+                    cpu->result.size = 3;
+                    break;
+                }
                 default: {
                     sprintf(cpu->result.disasm, "unknown opcode 0x%X 0x%X", opcode, opcode2);
                     break;
