@@ -2903,6 +2903,362 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
                     sprintf(cpu->result.disasm, "rr [hl]");
                     break;
                 }
+                case 0x27: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->af.high;
+                    extended <<= 1;
+
+                    cpu->af.high = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla a");
+                    break;
+                }
+                case 0x20: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.high;
+                    extended <<= 1;
+
+                    cpu->bc.high = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla b");
+                    break;
+                }
+                case 0x21: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.low;
+                    extended <<= 1;
+
+                    cpu->bc.low = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla c");
+                    break;
+                }
+                case 0x22: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.high;
+                    extended <<= 1;
+
+                    cpu->de.high = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla d");
+                    break;
+                }
+                case 0x23: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.low;
+                    extended <<= 1;
+
+                    cpu->de.low = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla e");
+                    break;
+                }
+                case 0x24: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.high;
+                    extended <<= 1;
+
+                    cpu->hl.high = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla h");
+                    break;
+                }
+                case 0x25: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.low;
+                    extended <<= 1;
+
+                    cpu->hl.low = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla l");
+                    break;
+                }
+                case 0x26: {
+                    flags->byte = 0;
+
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint16_t extended = (uint16_t)value;
+                    extended <<= 1;
+
+                    value = extended & 0xFF;
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sla [hl]");
+                    break;
+                }
+                case 0x2F: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->af.high & 0x80;
+                    uint8_t old_bit_0 = cpu->af.high & 0x1;
+                    cpu->af.high >>= 1;
+                    cpu->af.high |= old_bit_7;
+
+                    flags->z = (cpu->af.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra a");
+                    break;
+                }
+                case 0x28: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->bc.high & 0x80;
+                    uint8_t old_bit_0 = cpu->bc.high & 0x1;
+                    cpu->bc.high >>= 1;
+                    cpu->bc.high |= old_bit_7;
+
+                    flags->z = (cpu->bc.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra b");
+                    break;
+                }
+                case 0x29: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->bc.low & 0x80;
+                    uint8_t old_bit_0 = cpu->bc.low & 0x1;
+                    cpu->bc.low >>= 1;
+                    cpu->bc.low |= old_bit_7;
+
+                    flags->z = (cpu->bc.low == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra c");
+                    break;
+                }
+                case 0x2A: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->de.high & 0x80;
+                    uint8_t old_bit_0 = cpu->de.high & 0x1;
+                    cpu->de.high >>= 1;
+                    cpu->de.high |= old_bit_7;
+
+                    flags->z = (cpu->de.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra d");
+                    break;
+                }
+                case 0x2B: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->de.low & 0x80;
+                    uint8_t old_bit_0 = cpu->de.low & 0x1;
+                    cpu->de.low >>= 1;
+                    cpu->de.low |= old_bit_7;
+
+                    flags->z = (cpu->de.low == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra e");
+                    break;
+                }
+                case 0x2C: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->hl.high & 0x80;
+                    uint8_t old_bit_0 = cpu->hl.high & 0x1;
+                    cpu->hl.high >>= 1;
+                    cpu->hl.high |= old_bit_7;
+
+                    flags->z = (cpu->hl.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra h");
+                    break;
+                }
+                case 0x2D: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->hl.low & 0x80;
+                    uint8_t old_bit_0 = cpu->hl.low & 0x1;
+                    cpu->hl.low >>= 1;
+                    cpu->hl.low |= old_bit_7;
+
+                    flags->z = (cpu->hl.low == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "sra l");
+                    break;
+                }
+                case 0x2E: {
+                    flags->byte = 0;
+
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint8_t old_bit_7 = value & 0x80;
+                    uint8_t old_bit_0 = value & 0x1;
+                    value >>= 1;
+                    value |= old_bit_7;
+
+                    flags->z = (value == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "sra [hl]");
+                    break;
+                }
+                case 0x3F: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->af.high & 0x80;
+                    uint8_t old_bit_0 = cpu->af.high & 0x1;
+                    cpu->af.high >>= 1;
+
+                    flags->z = (cpu->af.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl a");
+                    break;
+                }
+                case 0x38: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->bc.high & 0x80;
+                    uint8_t old_bit_0 = cpu->bc.high & 0x1;
+                    cpu->bc.high >>= 1;
+
+                    flags->z = (cpu->bc.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl b");
+                    break;
+                }
+                case 0x39: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->bc.low & 0x80;
+                    uint8_t old_bit_0 = cpu->bc.low & 0x1;
+                    cpu->bc.low >>= 1;
+
+                    flags->z = (cpu->bc.low == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl c");
+                    break;
+                }
+                case 0x3A: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->de.high & 0x80;
+                    uint8_t old_bit_0 = cpu->de.high & 0x1;
+                    cpu->de.high >>= 1;
+
+                    flags->z = (cpu->de.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl d");
+                    break;
+                }
+                case 0x3B: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->de.low & 0x80;
+                    uint8_t old_bit_0 = cpu->de.low & 0x1;
+                    cpu->de.low >>= 1;
+
+                    flags->z = (cpu->de.low == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl e");
+                    break;
+                }
+                case 0x3C: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->hl.high & 0x80;
+                    uint8_t old_bit_0 = cpu->hl.high & 0x1;
+                    cpu->hl.high >>= 1;
+
+                    flags->z = (cpu->hl.high == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl h");
+                    break;
+                }
+                case 0x3D: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_7 = cpu->hl.low & 0x80;
+                    uint8_t old_bit_0 = cpu->hl.low & 0x1;
+                    cpu->hl.low >>= 1;
+
+                    flags->z = (cpu->hl.low == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "srl l");
+                    break;
+                }
+                case 0x3E: {
+                    flags->byte = 0;
+
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint8_t old_bit_7 = value & 0x80;
+                    uint8_t old_bit_0 = value & 0x1;
+                    value >>= 1;
+
+                    flags->z = (value == 0) ? 1 : 0;
+                    flags->c = (old_bit_0) ? 1 : 0;
+
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "srl [hl]");
+                    break;
+                }
                 default: {
                     sprintf(cpu->result.disasm, "unknown opcode 0x%X 0x%X", opcode, opcode2);
                     break;
