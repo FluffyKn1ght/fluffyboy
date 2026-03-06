@@ -40,6 +40,4 @@ typedef struct {
     cpu_result_t result;
 } cpu_state_t;
 
-void cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value);
-uint16_t cpu_stack_pop(cpu_state_t* cpu, memory_t* mem);
 void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem);
