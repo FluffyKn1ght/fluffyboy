@@ -1,7 +1,8 @@
 #include <stdint.h>
+#include "cartridge.h"
 
 typedef struct {
-    // TODO: Implement
+    cartridge_t* cart;
 } memory_t;
 
 uint8_t mem_read(memory_t* mem, uint16_t address);

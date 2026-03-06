@@ -3,9 +3,9 @@
 #include "memory.h"
 
 typedef enum {
-    NOT_ARMED = 0,
-    ARMED = 1,
-    ACTIVE = 2
+    ARMSTATE_NOT_ARMED = 0,
+    ARMSTATE_ARMED = 1,
+    ARMSTATE_ACTIVE = 2
 } cpu_arm_state_t;
 
 typedef union {

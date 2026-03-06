@@ -34,10 +34,10 @@ void cpu_advance(cpu_state_t* cpu, memory_t* mem) {
     cpu->result.cycles = -1;
     cpu->result.size = 1;
 
-    if (cpu->ei_state == ARMED) {
-        cpu->ei_state = ACTIVE;
-    } else if (cpu->ei_state == ACTIVE) {
-        cpu->ei_state = NOT_ARMED;
+    if (cpu->ei_state == ARMSTATE_ARMED) {
+        cpu->ei_state = ARMSTATE_ACTIVE;
+    } else if (cpu->ei_state == ARMSTATE_ACTIVE) {
+        cpu->ei_state = ARMSTATE_NOT_ARMED;
         cpu->ime = true;
     }
 
@@ -2209,7 +2209,7 @@ void cpu_advance(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0xFB: {
-            cpu->ei_state = ARMED;
+            cpu->ei_state = ARMSTATE_ARMED;
 
             cpu->result.cycles = 4;
             sprintf(cpu->result.disasm, "ei");
