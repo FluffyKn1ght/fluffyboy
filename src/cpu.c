@@ -41,7 +41,7 @@ void cpu_advance(cpu_state_t* cpu, memory_t* mem) {
         cpu->ime = true;
     }
 
-    if (cpu->halted) {
+    if (cpu->halted || cpu->stopped) {
         // TODO: Implement interrupt checking
         cpu->result.cycles = 1;
         cpu->result.size = 0;
@@ -2178,9 +2178,23 @@ void cpu_advance(cpu_state_t* cpu, memory_t* mem) {
         case 0x10: {
             // *insert sleeping fox noises*
 
-            // TODO: Make sure this arse pain of an opcode is implemented properly...
-
             cpu->stopped = true;
+
+            uint8_t joyp = mem_read(mem, 0xFF00);
+            uint8_t ie = mem_read(mem, 0xFFFF);
+            uint8_t ifl = mem_read(mem, 0xFF0F);
+            if ((~joyp) & 0xF) {
+                if ((ie & ifl) == 0) {
+                    cpu->pc++;
+                    cpu->halted = true;
+                }
+            } else {
+                if ((ie & ifl) != 0) {
+                    cpu->pc++;
+                }
+                cpu->stopped = true;
+                mem_write(mem, 0xFF04, 0);
+            }
 
             cpu->result.cycles = 4;
             sprintf(cpu->result.disasm, "stop");
