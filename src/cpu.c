@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
+void _cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
     // Adds a value onto the top of the stack and decrements SP twice.
 
     cpu->sp--;
@@ -12,7 +12,7 @@ void cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
     mem_write(mem, cpu->sp, value & 0xFF00);
 }
 
-uint16_t cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
+uint16_t _cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
     // Returns a value from the top of the stack and increments SP twice.
 
     uint16_t value = mem_readw(mem, cpu->sp);
@@ -751,56 +751,56 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0xF5: {
-            cpu_stack_push(cpu, mem, cpu->af.word);
+            _cpu_stack_push(cpu, mem, cpu->af.word);
 
             cpu->result.cycles = 16;
             sprintf(cpu->result.disasm, "push af");
             break;
         }
         case 0xC5: {
-            cpu_stack_push(cpu, mem, cpu->bc.word);
+            _cpu_stack_push(cpu, mem, cpu->bc.word);
 
             cpu->result.cycles = 16;
             sprintf(cpu->result.disasm, "push bc");
             break;
         }
         case 0xD5: {
-            cpu_stack_push(cpu, mem, cpu->de.word);
+            _cpu_stack_push(cpu, mem, cpu->de.word);
 
             cpu->result.cycles = 16;
             sprintf(cpu->result.disasm, "push de");
             break;
         }
         case 0xE5: {
-            cpu_stack_push(cpu, mem, cpu->hl.word);
+            _cpu_stack_push(cpu, mem, cpu->hl.word);
 
             cpu->result.cycles = 16;
             sprintf(cpu->result.disasm, "push hl");
             break;
         }
         case 0xF1: {
-            cpu->af.word = (cpu_stack_pop(cpu, mem) & 0xFFF0);
+            cpu->af.word = (_cpu_stack_pop(cpu, mem) & 0xFFF0);
 
             cpu->result.cycles = 12;
             sprintf(cpu->result.disasm, "pop af");
             break;
         }
         case 0xC1: {
-            cpu->bc.word = cpu_stack_pop(cpu, mem);
+            cpu->bc.word = _cpu_stack_pop(cpu, mem);
 
             cpu->result.cycles = 12;
             sprintf(cpu->result.disasm, "pop bc");
             break;
         }
         case 0xD1: {
-            cpu->de.word = cpu_stack_pop(cpu, mem);
+            cpu->de.word = _cpu_stack_pop(cpu, mem);
 
             cpu->result.cycles = 12;
             sprintf(cpu->result.disasm, "pop de");
             break;
         }
         case 0xE1: {
-            cpu->hl.word = cpu_stack_pop(cpu, mem);
+            cpu->hl.word = _cpu_stack_pop(cpu, mem);
 
             cpu->result.cycles = 12;
             sprintf(cpu->result.disasm, "pop hl");
@@ -2341,7 +2341,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x18: {
-            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+            int8_t add = (int8_t)imm8;
             cpu->pc++;
             cpu->pc += add;
 
@@ -2351,7 +2351,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x20: {
-            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+            int8_t add = (int8_t)imm8;
 
             if (!flags->z) {
                 cpu->pc++;
@@ -2365,7 +2365,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x28: {
-            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+            int8_t add = (int8_t)imm8;
 
             if (flags->z) {
                 cpu->pc++;
@@ -2379,7 +2379,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x30: {
-            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+            int8_t add = (int8_t)imm8;
 
             if (!flags->c) {
                 cpu->pc++;
@@ -2393,7 +2393,7 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x38: {
-            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+            int8_t add = (int8_t)imm8;
 
             if (flags->c) {
                 cpu->pc++;
