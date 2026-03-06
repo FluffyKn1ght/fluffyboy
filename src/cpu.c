@@ -20,7 +20,7 @@ uint16_t _cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
     return value;
 }
 
-void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
+void cpu_advance(cpu_state_t* cpu, memory_t* mem) {
     // Executes an instruction, reading/writing data from/to
     // the provided memory and altering the provided CPU state.
 
