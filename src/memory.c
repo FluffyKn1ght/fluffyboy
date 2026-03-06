@@ -3,7 +3,7 @@
 
 uint8_t mem_read(memory_t* mem, uint16_t address) {
     // TODO: Implement
-    return 0;
+    return 0x1F;
 }
 
 uint16_t mem_readw(memory_t* mem, uint16_t address) {

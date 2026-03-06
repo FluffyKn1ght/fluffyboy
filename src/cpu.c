@@ -29,11 +29,10 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
     uint8_t imm8 = mem_read(mem, cpu->pc);
     uint16_t imm16 = mem_readw(mem, cpu->pc);
-    cpu_f_register_t* flags = (cpu_f_register_t*)&cpu;
+    cpu_f_register_t* flags = (cpu_f_register_t*)&cpu->af.low;
 
     cpu->result.cycles = -1;
     cpu->result.size = 1;
-    cpu->result.disasm = "????????";
 
     if (cpu->ei_state == ARMED) {
         cpu->ei_state = ACTIVE;
@@ -2202,6 +2201,70 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             sprintf(cpu->result.disasm, "ei");
             break;
         }
+        case 0x07: {
+            flags->byte = 0;
+
+            uint16_t extended = (uint16_t)cpu->af.high;
+            extended <<= 1;
+            extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+            cpu->af.high = (uint8_t)(extended & 0xFF);
+
+            flags->z = (extended == 0) ? 1 : 0;
+            flags->c = (extended & 0x1) ? 1 : 0;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "rlca");
+            break;
+        }
+        case 0x17: {
+            flags->byte = 0;
+
+            uint16_t extended = (uint16_t)cpu->af.high;
+            extended |= (uint16_t)(flags->c) << 8;
+            extended <<= 1;
+            extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+            cpu->af.high = (uint8_t)(extended & 0xFF);
+            flags->c = (extended & 0x100) ? 1 : 0;
+            flags->z = (extended == 0) ? 1 : 0;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "rla");
+            break;
+        }
+        case 0x0F: {
+            flags->byte = 0;
+
+            uint8_t old_bit_0 = cpu->af.high & 0x1;
+            cpu->af.high >>= 1;
+            cpu->af.high |= (old_bit_0 << 7);
+
+            flags->c = (old_bit_0) ? 1 : 0;
+            flags->z = (cpu->af.high == 0) ? 1 : 0;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "rrca");
+            break;
+        }
+        case 0x1F: {
+            flags->byte = 0;
+
+            uint16_t extended = (uint16_t)cpu->af.high;
+            extended <<= 1;
+            extended |= (flags->c) ? 1 : 0;
+
+            uint8_t old_bit_0 = extended & 0x1;
+            extended >>= 1;
+            extended |= (old_bit_0 << 8);
+
+            cpu->af.high = (extended & 0x1FE) >> 1;
+            flags->c = (extended & 0x1) ? 1 : 0;
+            flags->z = (extended == 0) ? 1 : 0;
+
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "rra");
+            break;
+        }
         case 0xCB: {
             cpu->result.size = 2;
             uint8_t opcode2 = mem_read(mem, cpu->pc);
@@ -2312,6 +2375,532 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
 
                     cpu->result.cycles = 16;
                     sprintf(cpu->result.disasm, "swap [hl]");
+                    break;
+                }
+                case 0x07: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->af.high;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->af.high = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc a");
+                    break;
+                }
+                case 0x00: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.high;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->bc.high = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc b");
+                    break;
+                }
+                case 0x01: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.low;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->bc.low = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc c");
+                    break;
+                }
+                case 0x02: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.high;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->de.high = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc d");
+                    break;
+                }
+                case 0x03: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.low;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->de.low = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc e");
+                    break;
+                }
+                case 0x04: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.high;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->hl.high = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc h");
+                    break;
+                }
+                case 0x05: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.low;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    cpu->hl.low = (uint8_t)(extended & 0xFF);
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rlc l");
+                    break;
+                }
+                case 0x06: {
+                    flags->byte = 0;
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint16_t extended = (uint16_t)value;
+                    extended <<= 1;
+                    extended = (extended & 0xFF) | ((extended & 0x100) >> 8);
+                    mem_write(mem, cpu->hl.word, (uint8_t)(extended & 0xFF));
+
+                    flags->z = (extended == 0) ? 1 : 0;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "rlc [hl]");
+                    break;
+                }
+                case 0x17: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->af.high;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->af.high = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl a");
+                    break;
+                }
+                case 0x10: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.high;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->bc.high = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl b");
+                    break;
+                }
+                case 0x11: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.low;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->bc.low = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl c");
+                    break;
+                }
+                case 0x12: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.high;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->de.high = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl d");
+                    break;
+                }
+                case 0x13: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.low;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->de.low = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl e");
+                    break;
+                }
+                case 0x14: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.high;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->hl.high = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl h");
+                    break;
+                }
+                case 0x15: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.low;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    cpu->hl.low = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rl l");
+                    break;
+                }
+                case 0x16: {
+                    flags->byte = 0;
+
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint16_t extended = (uint16_t)value;
+                    extended |= (uint16_t)(flags->c) << 8;
+                    extended <<= 1;
+                    extended = (extended & 0x1FF) | ((extended & 0x200) >> 9);
+
+                    value = (uint8_t)(extended & 0xFF);
+                    flags->c = (extended & 0x100) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "rl [hl]");
+                    break;
+                }
+                case 0x0F: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_0 = cpu->af.high & 0x1;
+                    cpu->af.high >>= 1;
+                    cpu->af.high |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->af.high == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc a");
+                    break;
+                }
+                case 0x08: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_0 = cpu->bc.high & 0x1;
+                    cpu->bc.high >>= 1;
+                    cpu->bc.high |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->bc.high == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc b");
+                    break;
+                }
+                case 0x09: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_0 = cpu->bc.low & 0x1;
+                    cpu->bc.low >>= 1;
+                    cpu->bc.low |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->bc.low == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc c");
+                    break;
+                }
+                case 0x0A: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_0 = cpu->de.high & 0x1;
+                    cpu->de.high >>= 1;
+                    cpu->de.high |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->de.high == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc d");
+                    break;
+                }
+                case 0x0B: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_0 = cpu->de.low & 0x1;
+                    cpu->de.low >>= 1;
+                    cpu->de.low |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->de.low == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc e");
+                    break;
+                }
+                case 0x0C: {
+                    flags->byte = 0;
+
+                    uint8_t old_bit_0 = cpu->hl.high & 0x1;
+                    cpu->hl.high >>= 1;
+                    cpu->hl.high |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->hl.high == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc h");
+                    break;
+                }
+                case 0x0D: {
+                    flags->byte = 0;
+
+
+                    uint8_t old_bit_0 = cpu->hl.low & 0x1;
+                    cpu->hl.low >>= 1;
+                    cpu->hl.low |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (cpu->hl.low == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rrc l");
+                    break;
+                }
+                case 0x0E: {
+                    flags->byte = 0;
+
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint8_t old_bit_0 = value & 0x1;
+                    value >>= 1;
+                    value |= (old_bit_0 << 7);
+
+                    flags->c = (old_bit_0) ? 1 : 0;
+                    flags->z = (value == 0) ? 1 : 0;
+
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "rrc [hl]");
+                    break;
+                }
+                case 0x1F: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->af.high;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->af.high = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr a");
+                    break;
+                }
+                case 0x18: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.high;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->bc.high = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr b");
+                    break;
+                }
+                case 0x19: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->bc.low;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->bc.low = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr c");
+                    break;
+                }
+                case 0x1A: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.high;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->de.high = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr d");
+                    break;
+                }
+                case 0x1B: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->de.low;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->de.low = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr e");
+                    break;
+                }
+                case 0x1C: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.high;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->hl.high = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr h");
+                    break;
+                }
+                case 0x1D: {
+                    flags->byte = 0;
+
+                    uint16_t extended = (uint16_t)cpu->hl.low;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    cpu->hl.low = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    cpu->result.cycles = 8;
+                    sprintf(cpu->result.disasm, "rr l");
+                    break;
+                }
+                case 0x1E: {
+                    flags->byte = 0;
+
+                    uint8_t value = mem_read(mem, cpu->hl.word);
+
+                    uint16_t extended = (uint16_t)value;
+                    extended <<= 1;
+                    extended |= (flags->c) ? 1 : 0;
+
+                    uint8_t old_bit_0 = extended & 0x1;
+                    extended >>= 1;
+                    extended |= (old_bit_0 << 8);
+
+                    value = (extended & 0x1FE) >> 1;
+                    flags->c = (extended & 0x1) ? 1 : 0;
+                    flags->z = (extended == 0) ? 1 : 0;
+
+                    mem_write(mem, cpu->hl.word, value);
+
+                    cpu->result.cycles = 16;
+                    sprintf(cpu->result.disasm, "rr [hl]");
                     break;
                 }
                 default: {

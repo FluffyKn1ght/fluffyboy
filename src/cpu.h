@@ -26,7 +26,7 @@ typedef union {
 typedef struct {
     int8_t cycles;
     int8_t size;
-    char* disasm;
+    char disasm[32];
 } cpu_result_t;
 
 typedef struct {
