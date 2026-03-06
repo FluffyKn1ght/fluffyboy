@@ -2406,6 +2406,196 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             cpu->result.size = 2;
             break;
         }
+        case 0xCD: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = imm16;
+
+            cpu->result.cycles = 24;
+            sprintf(cpu->result.disasm, "call 0x%X", imm16);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xC4: {
+            if (!flags->z) {
+                _cpu_stack_push(cpu, mem, cpu->pc);
+                cpu->pc = imm16;
+                cpu->result.cycles = 24;
+            } else {
+                cpu->result.cycles = 12;
+                cpu->pc++;
+                cpu->pc++;
+            }
+            sprintf(cpu->result.disasm, "call nz, 0x%X", imm16);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xCC: {
+            if (flags->z) {
+                _cpu_stack_push(cpu, mem, cpu->pc);
+                cpu->pc = imm16;
+                cpu->result.cycles = 24;
+            } else {
+                cpu->result.cycles = 12;
+                cpu->pc++;
+                cpu->pc++;
+            }
+            sprintf(cpu->result.disasm, "call z, 0x%X", imm16);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xD4: {
+            if (!flags->c) {
+                _cpu_stack_push(cpu, mem, cpu->pc);
+                cpu->pc = imm16;
+                cpu->result.cycles = 24;
+            } else {
+                cpu->result.cycles = 12;
+                cpu->pc++;
+                cpu->pc++;
+            }
+            sprintf(cpu->result.disasm, "call nc, 0x%X", imm16);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xDC: {
+            if (flags->c) {
+                _cpu_stack_push(cpu, mem, cpu->pc);
+                cpu->pc = imm16;
+                cpu->result.cycles = 24;
+            } else {
+                cpu->result.cycles = 12;
+                cpu->pc++;
+                cpu->pc++;
+            }
+            sprintf(cpu->result.disasm, "call c, 0x%X", imm16);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xC7: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x00;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x00");
+            break;
+        }
+        case 0xCF: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x08;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x08");
+            break;
+        }
+        case 0xD7: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x10;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x10");
+            break;
+        }
+        case 0xDF: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x18;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x18");
+            break;
+        }
+        case 0xE7: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x20;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x20");
+            break;
+        }
+        case 0xEF: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x28;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x28");
+            break;
+        }
+        case 0xF7: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x30;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x30");
+            break;
+        }
+        case 0xFF: {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            cpu->pc = 0x38;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "rst 0x38");
+            break;
+        }
+        case 0xC9: {
+            uint16_t return_to = _cpu_stack_pop(cpu, mem);
+            cpu->pc = return_to;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "ret");
+            break;
+        }
+        case 0xC0: {
+            if (!flags->z) {
+                uint16_t return_to = _cpu_stack_pop(cpu, mem);
+                cpu->pc = return_to;
+                cpu->result.cycles = 20;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "ret nz");
+            break;
+        }
+        case 0xC8: {
+            if (flags->z) {
+                uint16_t return_to = _cpu_stack_pop(cpu, mem);
+                cpu->pc = return_to;
+                cpu->result.cycles = 20;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "ret z");
+            break;
+        }
+        case 0xD0: {
+            if (!flags->c) {
+                uint16_t return_to = _cpu_stack_pop(cpu, mem);
+                cpu->pc = return_to;
+                cpu->result.cycles = 20;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "ret nc");
+            break;
+        }
+        case 0xD8: {
+            if (flags->c) {
+                uint16_t return_to = _cpu_stack_pop(cpu, mem);
+                cpu->pc = return_to;
+                cpu->result.cycles = 20;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "ret c");
+            break;
+        }
+        case 0xD9: {
+            uint16_t return_to = _cpu_stack_pop(cpu, mem);
+            cpu->pc = return_to;
+            cpu->ime = true;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "reti");
+            break;
+        }
         case 0xCB: {
             cpu->result.size = 2;
             uint8_t opcode2 = mem_read(mem, cpu->pc);
