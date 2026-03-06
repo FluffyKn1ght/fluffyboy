@@ -2265,6 +2265,147 @@ void cpu_execute_instruction(cpu_state_t* cpu, memory_t* mem) {
             sprintf(cpu->result.disasm, "rra");
             break;
         }
+        case 0xC3: {
+            uint16_t address = mem_readw(mem, cpu->pc);
+            cpu->pc = address;
+
+            cpu->result.cycles = 16;
+            sprintf(cpu->result.disasm, "jp 0x%X", address);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xC2: {
+            uint16_t address = mem_readw(mem, cpu->pc);
+            if (!flags->z) {
+                cpu->pc = address;
+
+                cpu->result.cycles = 16;
+            } else {
+                cpu->pc++;
+                cpu->pc++;
+                cpu->result.cycles = 12;
+            }
+            sprintf(cpu->result.disasm, "jp nz, 0x%X", address);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xCA: {
+            uint16_t address = mem_readw(mem, cpu->pc);
+            if (flags->z) {
+                cpu->pc = address;
+
+                cpu->result.cycles = 16;
+            } else {
+                cpu->pc++;
+                cpu->pc++;
+                cpu->result.cycles = 12;
+            }
+            sprintf(cpu->result.disasm, "jp z, 0x%X", address);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xD2: {
+            uint16_t address = mem_readw(mem, cpu->pc);
+            if (!flags->c) {
+                cpu->pc = address;
+
+                cpu->result.cycles = 16;
+            } else {
+                cpu->pc++;
+                cpu->pc++;
+                cpu->result.cycles = 12;
+            }
+            sprintf(cpu->result.disasm, "jp nc, 0x%X", address);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xDA: {
+            uint16_t address = mem_readw(mem, cpu->pc);
+            if (flags->c) {
+                cpu->pc = address;
+
+                cpu->result.cycles = 16;
+            } else {
+                cpu->pc++;
+                cpu->pc++;
+                cpu->result.cycles = 12;
+            }
+            sprintf(cpu->result.disasm, "jp c, 0x%X", address);
+            cpu->result.size = 3;
+            break;
+        }
+        case 0xE9: {
+            cpu->pc = cpu->hl.word;
+            cpu->result.cycles = 4;
+            sprintf(cpu->result.disasm, "jp hl");
+            break;
+        }
+        case 0x18: {
+            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+            cpu->pc++;
+            cpu->pc += add;
+
+            cpu->result.cycles = 12;
+            sprintf(cpu->result.disasm, "jr %d", add);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x20: {
+            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+
+            if (!flags->z) {
+                cpu->pc++;
+                cpu->pc += add;
+                cpu->result.cycles = 12;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "jr nz, %d", add);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x28: {
+            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+
+            if (flags->z) {
+                cpu->pc++;
+                cpu->pc += add;
+                cpu->result.cycles = 12;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "jr z, %d", add);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x30: {
+            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+
+            if (!flags->c) {
+                cpu->pc++;
+                cpu->pc += add;
+                cpu->result.cycles = 12;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "jr nc, %d", add);
+            cpu->result.size = 2;
+            break;
+        }
+        case 0x38: {
+            int8_t add = (int8_t)mem_read(mem, cpu->pc);
+
+            if (flags->c) {
+                cpu->pc++;
+                cpu->pc += add;
+                cpu->result.cycles = 12;
+            } else {
+                cpu->result.cycles = 8;
+            }
+            sprintf(cpu->result.disasm, "jr c, %d", add);
+            cpu->result.size = 2;
+            break;
+        }
         case 0xCB: {
             cpu->result.size = 2;
             uint8_t opcode2 = mem_read(mem, cpu->pc);
