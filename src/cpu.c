@@ -1897,4 +1897,34 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
     }
+
+    if (cpu->ime) {
+        cpu->ime = false;
+        cpu->ei_state = ARMSTATE_NOT_ARMED; // TODO: Test if this is correct
+
+        uint8_t int_flag = mem_read(mem, 0xFF0F);
+        uint8_t int_enable = mem_read(mem, 0xFFFF);
+
+        if (int_flag & int_enable) {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+            _cpu_synchronize(12);
+
+            if ((int_flag & 0x1) & (int_enable & 0x1)) {
+                int_flag &= ~(0x1);
+                cpu->pc = 0x0040;
+            } else if ((int_flag & 0x2) & (int_enable & 0x2)) {
+                int_flag &= ~(0x2);
+                cpu->pc = 0x0048;
+            } else if ((int_flag & 0x4) & (int_enable & 0x4)) {
+                int_flag &= ~(0x4);
+                cpu->pc = 0x0050;
+            } else if ((int_flag & 0x8) & (int_enable & 0x8)) {
+                int_flag &= ~(0x8);
+                cpu->pc = 0x0058;
+            } else if ((int_flag & 0x10) & (int_enable & 0x10)) {
+                int_flag &= ~(0x10);
+                cpu->pc = 0x0060;
+            }
+        }
+    }
 }
