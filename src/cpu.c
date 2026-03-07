@@ -154,6 +154,55 @@ void _cpu_xor8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b) {
     _cpu_synchronize(4);
 }
 
+void _cpu_cp8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte = 0;
+    flags->n = 1;
+
+    flags->h = ((*operand_a & 0xF) < (*operand_b & 0xF)) ? 0 : 1;
+    flags->c = (*operand_a < *operand_b) ? 0 : 1;
+    flags->z = (*operand_a == *operand_b) ? 1 : 0;
+
+    _cpu_synchronize(4);
+}
+
+void _cpu_inc8(cpu_state_t* cpu, uint8_t* what) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte &= 0x10;
+
+    uint16_t full_result = *what + 1;
+    uint16_t partial_result = (*what & 0xF) + 1;
+
+    if (partial_result > 0xF) {
+        flags->h = 1;
+    }
+    if ((full_result & 0xFF) == 0) {
+        flags->z = 1;
+    }
+
+    *what = (full_result & 0xFF);
+    _cpu_synchronize(4);
+}
+
+void _cpu_dec8(cpu_state_t* cpu, uint8_t* what) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte &= 0x10;
+    flags->n = 1;
+
+    int16_t full_result = *what - 1;
+    int8_t partial_result = (*what & 0xF) - 1;
+
+    if (!(partial_result < 0)) {
+        flags->h = 1;
+    }
+    if ((full_result & 0xFF) == 0) {
+        flags->z = 1;
+    }
+
+    *what = (full_result & 0xFF);
+    _cpu_synchronize(4);
+}
+
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     uint8_t opcode = mem_read(mem, cpu->pc);
     cpu->pc++;
@@ -863,6 +912,114 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xAF: {
             _cpu_xor8(cpu, &(cpu->af.high), &(cpu->af.high));
+            break;
+        }
+        case 0xB8: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->bc.high));
+            break;
+        }
+        case 0xB9: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->bc.low));
+            break;
+        }
+        case 0xBA: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->de.high));
+            break;
+        }
+        case 0xBB: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->de.low));
+            break;
+        }
+        case 0xBC: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->hl.high));
+            break;
+        }
+        case 0xBD: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->hl.low));
+            break;
+        }
+        case 0xBE: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_cp8(cpu, &(cpu->af.high), &thing_at_hl);
+            break;
+        }
+        case 0xFE: {
+            uint8_t imm8 = _cpu_read_imm8(cpu, mem);
+            _cpu_cp8(cpu, &(cpu->af.high), &imm8);
+            break;
+        }
+        case 0xBF: {
+            _cpu_cp8(cpu, &(cpu->af.high), &(cpu->af.high));
+            break;
+        }
+        case 0x04: {
+            _cpu_inc8(cpu, &(cpu->bc.high));
+            break;
+        }
+        case 0x0C: {
+            _cpu_inc8(cpu, &(cpu->bc.low));
+            break;
+        }
+        case 0x14: {
+            _cpu_inc8(cpu, &(cpu->de.high));
+            break;
+        }
+        case 0x1C: {
+            _cpu_inc8(cpu, &(cpu->de.low));
+            break;
+        }
+        case 0x24: {
+            _cpu_inc8(cpu, &(cpu->hl.high));
+            break;
+        }
+        case 0x2C: {
+            _cpu_inc8(cpu, &(cpu->hl.low));
+            break;
+        }
+        case 0x34: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_inc8(cpu, &thing_at_hl);
+            _cpu_write_hl_addr(cpu, mem, thing_at_hl);
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x3C: {
+            _cpu_inc8(cpu, &(cpu->af.high));
+            break;
+        }
+        case 0x05: {
+            _cpu_dec8(cpu, &(cpu->bc.high));
+            break;
+        }
+        case 0x0D: {
+            _cpu_dec8(cpu, &(cpu->bc.low));
+            break;
+        }
+        case 0x15: {
+            _cpu_dec8(cpu, &(cpu->de.high));
+            break;
+        }
+        case 0x1D: {
+            _cpu_dec8(cpu, &(cpu->de.low));
+            break;
+        }
+        case 0x25: {
+            _cpu_dec8(cpu, &(cpu->hl.high));
+            break;
+        }
+        case 0x2D: {
+            _cpu_dec8(cpu, &(cpu->hl.low));
+            break;
+        }
+        case 0x35: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_dec8(cpu, &thing_at_hl);
+            _cpu_write_hl_addr(cpu, mem, thing_at_hl);
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x3D: {
+            _cpu_dec8(cpu, &(cpu->af.high));
             break;
         }
     }
