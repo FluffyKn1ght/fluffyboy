@@ -64,11 +64,11 @@ uint16_t _cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
     return value;
 }
 
-uint8_t _cpu_add8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b, bool with_carry) {
+void _cpu_add8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b, bool with_carry) {
     cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
     flags->byte = 0;
 
-    uint8_t operand_c = (with_carry) ? 1 : 0;
+    uint8_t operand_c = (with_carry && flags->c) ? 1 : 0;
 
     uint16_t full_result = *operand_a + *operand_b + operand_c;
     uint8_t partial_result = (*operand_a & 0xF) + (*operand_b & 0xF) + operand_c;
@@ -78,15 +78,40 @@ uint8_t _cpu_add8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b, bool
     }
 
     if (full_result > 0xFF) {
-        flags->c = 1;
+        flags->c = 0;
     }
     if (partial_result > 0xF) {
-        flags->h = 1;
+        flags->h = 0;
     }
 
     *operand_a = (uint8_t)(full_result & 0xFF);
     _cpu_synchronize(4);
-    return (uint8_t)(full_result & 0xFF);
+}
+
+void _cpu_sub8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b, bool with_carry) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte = 0;
+    flags->n = 1;
+
+    int8_t operand_c = (with_carry && flags->c) ? 1 : 0;
+
+    uint16_t full_result = *operand_a - *operand_b - operand_c;
+    int16_t full_signed_result = *operand_a - *operand_b - operand_c;
+    int8_t partial_result = (*operand_a & 0xF) - (*operand_b & 0xF) - operand_c;
+
+    if (!(full_signed_result < 0)) {
+        flags->c = 1;
+    }
+    if (!(partial_result < 0)) {
+        flags->h = 1;
+    }
+
+    if (full_result == 0) {
+        flags->z = 1;
+    }
+
+    *operand_a = (uint8_t)(full_result & 0xFF);
+    _cpu_synchronize(4);
 }
 
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
@@ -613,6 +638,77 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         case 0xCE: {
             uint8_t value = _cpu_read_imm8(cpu, mem);
             _cpu_add8(cpu, &(cpu->af.high), &value, true);
+            break;
+        }
+        case 0x90: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->bc.high), false);
+            break;
+        }
+        case 0x91: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->bc.low), false);
+            break;
+        }
+        case 0x92: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->de.high), false);
+            break;
+        }
+        case 0x93: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->de.low), false);
+            break;
+        }
+        case 0x94: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->hl.high), false);
+            break;
+        }
+        case 0x95: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->hl.low), false);
+            break;
+        }
+        case 0x96: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_sub8(cpu, &(cpu->af.high), &thing_at_hl, false);
+            break;
+        }
+        case 0x97: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->af.high), false);
+            break;
+        }
+        case 0xD6: {
+            uint8_t value = _cpu_read_imm8(cpu, mem);
+            _cpu_sub8(cpu, &(cpu->af.high), &value, false);
+            break;
+        }
+        case 0x98: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->bc.high), true);
+            break;
+        }
+        case 0x99: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->bc.low), true);
+            break;
+        }
+        case 0x9A: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->de.high), true);
+            break;
+        }
+        case 0x9B: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->de.low), true);
+            break;
+        }
+        case 0x9C: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->hl.high), true);
+            break;
+        }
+        case 0x9D: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->hl.low), true);
+            break;
+        }
+        case 0x9E: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_sub8(cpu, &(cpu->af.high), &thing_at_hl, true);
+            break;
+        }
+        case 0x9F: {
+            _cpu_sub8(cpu, &(cpu->af.high), &(cpu->af.high), true);
             break;
         }
     }
