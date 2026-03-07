@@ -203,6 +203,24 @@ void _cpu_dec8(cpu_state_t* cpu, uint8_t* what) {
     _cpu_synchronize(4);
 }
 
+void _cpu_add16(cpu_state_t* cpu, uint16_t* operand_a, uint16_t* operand_b) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte &= 0x80;
+
+    uint32_t partial_result = ((*operand_a & 0xFFF) + (*operand_b & 0xFFF));
+    uint32_t full_result = *operand_a + *operand_b;
+
+    if (partial_result > 0xFFF) {
+        flags->h = 1;
+    }
+    if (full_result > 0xFFFF) {
+        flags->c = 1;
+    }
+
+    *operand_a = (uint16_t)(*operand_a & 0xFFFF);
+    _cpu_synchronize(8);
+}
+
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     uint8_t opcode = mem_read(mem, cpu->pc);
     cpu->pc++;
@@ -602,8 +620,8 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             _cpu_load16(&(cpu->hl.word), cpu->sp + (int8_t)(_cpu_read_imm8(cpu, mem)));
 
             flags->byte = 0;
-            flags->c = ((cpu->last_imm16 & 0xFF) < (cpu->sp & 0xFF));
-            flags->h = ((cpu->last_imm16 & 0xF) < (cpu->sp & 0xF));
+            flags->c = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xFF) < (cpu->sp & 0xFF));
+            flags->h = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xF) < (cpu->sp & 0xF));
 
             _cpu_synchronize(4);
             break;
@@ -1020,6 +1038,55 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0x3D: {
             _cpu_dec8(cpu, &(cpu->af.high));
+            break;
+        }
+        case 0xE8: {
+            cpu->sp += (int8_t)(_cpu_read_imm8(cpu, mem));
+
+            flags->c = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xFF) < (cpu->sp & 0xFF));
+            flags->h = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xF) < (cpu->sp & 0xF));
+
+            _cpu_synchronize(12);
+            break;
+        }
+        case 0x03: {
+            cpu->bc.word++;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x13: {
+            cpu->de.word++;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x23: {
+            cpu->hl.word++;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x33: {
+            cpu->sp++;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x0B: {
+            cpu->bc.word--;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x1B: {
+            cpu->de.word--;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x2B: {
+            cpu->hl.word--;
+            _cpu_synchronize(8);
+            break;
+        }
+        case 0x3B: {
+            cpu->sp--;
+            _cpu_synchronize(8);
             break;
         }
     }
