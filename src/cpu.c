@@ -221,6 +221,70 @@ void _cpu_add16(cpu_state_t* cpu, uint16_t* operand_a, uint16_t* operand_b) {
     _cpu_synchronize(8);
 }
 
+void _cpu_swap8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte = 0;
+
+    if (*operand == 0) {
+        flags->z = 1;
+    }
+
+    uint8_t lower_nibble = *operand & 0xF;
+    uint8_t upper_nibble = (*operand & 0xF0) >> 4;
+    *operand = (lower_nibble << 4) | upper_nibble;
+    _cpu_synchronize(4);
+}
+
+void _cpu_stop(cpu_state_t* cpu, memory_t* mem) {
+    // TODO: Implement accurate behavior
+    cpu->stopped = true;
+}
+
+void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
+    _cpu_synchronize(4);
+    uint8_t opcode = mem_read(mem, cpu->pc);
+    cpu->pc++;
+
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+
+    switch (opcode) {
+        case 0x30: {
+            _cpu_swap8(cpu, mem, &(cpu->bc.high));
+            break;
+        }
+        case 0x31: {
+            _cpu_swap8(cpu, mem, &(cpu->bc.low));
+            break;
+        }
+        case 0x32: {
+            _cpu_swap8(cpu, mem, &(cpu->de.high));
+            break;
+        }
+        case 0x33: {
+            _cpu_swap8(cpu, mem, &(cpu->de.low));
+            break;
+        }
+        case 0x34: {
+            _cpu_swap8(cpu, mem, &(cpu->hl.high));
+            break;
+        }
+        case 0x35: {
+            _cpu_swap8(cpu, mem, &(cpu->hl.low));
+            break;
+        }
+        case 0x36: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_swap8(cpu, mem, &thing_at_hl);
+            _cpu_write_hl_addr(cpu, mem, thing_at_hl);
+            break;
+        }
+        case 0x37: {
+            _cpu_swap8(cpu, mem, &(cpu->af.high));
+            break;
+        }
+    }
+}
+
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     uint8_t opcode = mem_read(mem, cpu->pc);
     cpu->pc++;
@@ -1087,6 +1151,81 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         case 0x3B: {
             cpu->sp--;
             _cpu_synchronize(8);
+            break;
+        }
+        case 0xCB: {
+            _cpu_exec_prefixed(cpu, mem);
+            break;
+        }
+        case 0x27: {
+            uint16_t extended = (uint16_t)cpu->af.high;
+
+            if (!flags->n) {
+                if (flags->h || (extended & 0xF) > 9) {
+                    extended += 0x06;
+                }
+                if (flags->c || extended > 0x9F) {
+                    extended += 0x60;
+                }
+            } else {
+                if (flags->h) {
+                    extended = (extended - 6) & 0xFF;
+                }
+                if (flags->c) {
+                    extended -= 0x60;
+                }
+            }
+
+            flags->h = 0;
+            flags->c = (extended >= 0x0100) ? 1 : 0;
+            cpu->af.high = extended & 0xFF;
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x2F: {
+            flags->n = 1;
+            flags->h = 1;
+
+            cpu->af.high = ~(cpu->af.high);
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x3F: {
+            flags->n = 0;
+            flags->h = 0;
+            flags->c = !(flags->c);
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x37: {
+            flags->n = 0;
+            flags->h = 0;
+            flags->c = 1;
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x00: {
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x76: {
+            cpu->halted = true;
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x10: {
+            _cpu_stop(cpu, mem);
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0xF3: {
+            cpu->ime = false;
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0xFB: {
+            cpu->ei_state = ARMSTATE_ARMED;
+            _cpu_synchronize(4);
             break;
         }
     }
