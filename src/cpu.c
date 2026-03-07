@@ -221,7 +221,12 @@ void _cpu_add16(cpu_state_t* cpu, uint16_t* operand_a, uint16_t* operand_b) {
     _cpu_synchronize(8);
 }
 
-void _cpu_swap8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
+void _cpu_stop(cpu_state_t* cpu) {
+    // TODO: Implement accurate behavior
+    cpu->stopped = true;
+}
+
+void _cpu_swap8(cpu_state_t* cpu, uint8_t* operand) {
     cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
     flags->byte = 0;
 
@@ -235,11 +240,6 @@ void _cpu_swap8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
     _cpu_synchronize(4);
 }
 
-void _cpu_stop(cpu_state_t* cpu, memory_t* mem) {
-    // TODO: Implement accurate behavior
-    cpu->stopped = true;
-}
-
 void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
     _cpu_synchronize(4);
     uint8_t opcode = mem_read(mem, cpu->pc);
@@ -249,37 +249,37 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
 
     switch (opcode) {
         case 0x30: {
-            _cpu_swap8(cpu, mem, &(cpu->bc.high));
+            _cpu_swap8(cpu, &(cpu->bc.high));
             break;
         }
         case 0x31: {
-            _cpu_swap8(cpu, mem, &(cpu->bc.low));
+            _cpu_swap8(cpu, &(cpu->bc.low));
             break;
         }
         case 0x32: {
-            _cpu_swap8(cpu, mem, &(cpu->de.high));
+            _cpu_swap8(cpu, &(cpu->de.high));
             break;
         }
         case 0x33: {
-            _cpu_swap8(cpu, mem, &(cpu->de.low));
+            _cpu_swap8(cpu, &(cpu->de.low));
             break;
         }
         case 0x34: {
-            _cpu_swap8(cpu, mem, &(cpu->hl.high));
+            _cpu_swap8(cpu, &(cpu->hl.high));
             break;
         }
         case 0x35: {
-            _cpu_swap8(cpu, mem, &(cpu->hl.low));
+            _cpu_swap8(cpu, &(cpu->hl.low));
             break;
         }
         case 0x36: {
             uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
-            _cpu_swap8(cpu, mem, &thing_at_hl);
+            _cpu_swap8(cpu, &thing_at_hl);
             _cpu_write_hl_addr(cpu, mem, thing_at_hl);
             break;
         }
         case 0x37: {
-            _cpu_swap8(cpu, mem, &(cpu->af.high));
+            _cpu_swap8(cpu, &(cpu->af.high));
             break;
         }
     }
