@@ -64,6 +64,31 @@ uint16_t _cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
     return value;
 }
 
+uint8_t _cpu_add8(cpu_state_t* cpu, uint8_t* operand_a, uint8_t* operand_b, bool with_carry) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+    flags->byte = 0;
+
+    uint8_t operand_c = (with_carry) ? 1 : 0;
+
+    uint16_t full_result = *operand_a + *operand_b + operand_c;
+    uint8_t partial_result = (*operand_a & 0xF) + (*operand_b & 0xF) + operand_c;
+
+    if (full_result == 0) {
+        flags->z = 1;
+    }
+
+    if (full_result > 0xFF) {
+        flags->c = 1;
+    }
+    if (partial_result > 0xF) {
+        flags->h = 1;
+    }
+
+    *operand_a = (uint8_t)(full_result & 0xFF);
+    _cpu_synchronize(4);
+    return (uint8_t)(full_result & 0xFF);
+}
+
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     uint8_t opcode = mem_read(mem, cpu->pc);
     cpu->pc++;
@@ -512,6 +537,82 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xE1: {
             _cpu_load16(&(cpu->hl.word), _cpu_stack_pop(cpu, mem));
+            break;
+        }
+        case 0x80: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->bc.high), false);
+            break;
+        }
+        case 0x81: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->bc.low), false);
+            break;
+        }
+        case 0x82: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->de.high), false);
+            break;
+        }
+        case 0x83: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->de.low), false);
+            break;
+        }
+        case 0x84: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->hl.high), false);
+            break;
+        }
+        case 0x85: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->hl.low), false);
+            break;
+        }
+        case 0x86: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_add8(cpu, &(cpu->af.high), &thing_at_hl, false);
+            break;
+        }
+        case 0x87: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->af.high), false);
+            break;
+        }
+        case 0xC6: {
+            uint8_t value = _cpu_read_imm8(cpu, mem);
+            _cpu_add8(cpu, &(cpu->af.high), &value, false);
+            break;
+        }
+        case 0x88: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->bc.high), true);
+            break;
+        }
+        case 0x89: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->bc.low), true);
+            break;
+        }
+        case 0x8A: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->de.high), true);
+            break;
+        }
+        case 0x8B: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->de.low), true);
+            break;
+        }
+        case 0x8C: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->hl.high), true);
+            break;
+        }
+        case 0x8D: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->hl.low), true);
+            break;
+        }
+        case 0x8E: {
+            uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
+            _cpu_add8(cpu, &(cpu->af.high), &thing_at_hl, true);
+            break;
+        }
+        case 0x8F: {
+            _cpu_add8(cpu, &(cpu->af.high), &(cpu->af.high), true);
+            break;
+        }
+        case 0xCE: {
+            uint8_t value = _cpu_read_imm8(cpu, mem);
+            _cpu_add8(cpu, &(cpu->af.high), &value, true);
             break;
         }
     }
