@@ -346,6 +346,24 @@ void _cpu_bit_change(cpu_state_t* cpu, uint8_t* operand, _BitInt(3) bit, bool se
     }
 }
 
+void _cpu_jump(cpu_state_t* cpu, memory_t* mem, uint16_t where, void* condition, bool cond_target, bool push_pc) {
+    bool do_we_jump = (condition && (*(bool*)condition == cond_target)) || !condition;
+    _cpu_synchronize(4);
+
+    // jp not taken - +4 cycles
+    // jp taken - +8 cycles
+    // call not taken - +4 cycles
+    // call taken - +16 (+12 +4) cycles
+
+    if (do_we_jump) {
+        if (push_pc) {
+            _cpu_stack_push(cpu, mem, cpu->pc);
+        }
+        cpu->pc = where;
+        _cpu_synchronize(4);
+    }
+}
+
 void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
     _cpu_synchronize(4);
     uint8_t opcode = mem_read(mem, cpu->pc);
@@ -1688,6 +1706,149 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0x1F: {
             _cpu_rotate_right_thru_carry(cpu, &(cpu->af.high));
+            break;
+        }
+        case 0xC3: {
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), NULL, false, false);
+            break;
+        }
+        case 0xC2: {
+            bool zero = flags->z;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &zero, false, false);
+            break;
+        }
+        case 0xCA: {
+            bool zero = flags->z;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &zero, true, false);
+            break;
+        }
+        case 0xD2: {
+            bool carry = flags->c;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &carry, false, false);
+            break;
+        }
+        case 0xDA: {
+            bool carry = flags->c;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &carry, true, false);
+            break;
+        }
+        case 0xE9: {
+            cpu->pc = cpu->hl.word;
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x18: {
+            int8_t offset = (int8_t)_cpu_read_imm8(cpu, mem);
+            _cpu_jump(cpu, mem, cpu->pc + offset, NULL, false, false);
+            break;
+        }
+        case 0x20: {
+            bool zero = flags->z;
+            int8_t offset = (int8_t)_cpu_read_imm8(cpu, mem);
+            _cpu_jump(cpu, mem, cpu->pc + offset, &zero, false, false);
+            break;
+        }
+        case 0x28: {
+            bool zero = flags->z;
+            int8_t offset = (int8_t)_cpu_read_imm8(cpu, mem);
+            _cpu_jump(cpu, mem, cpu->pc + offset, &zero, true, false);
+            break;
+        }
+        case 0x30: {
+            bool carry = flags->c;
+            int8_t offset = (int8_t)_cpu_read_imm8(cpu, mem);
+            _cpu_jump(cpu, mem, cpu->pc + offset, &carry, false, false);
+            break;
+        }
+        case 0x38: {
+            bool carry = flags->c;
+            int8_t offset = (int8_t)_cpu_read_imm8(cpu, mem);
+            _cpu_jump(cpu, mem, cpu->pc + offset, &carry, true, false);
+            break;
+        }
+        case 0xCD: {
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), NULL, false, true);
+            break;
+        }
+        case 0xC4: {
+            bool zero = flags->z;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &zero, false, true);
+            break;
+        }
+        case 0xCC: {
+            bool zero = flags->z;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &zero, true, true);
+            break;
+        }
+        case 0xD4: {
+            bool carry = flags->c;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &carry, false, true);
+            break;
+        }
+        case 0xDC: {
+            bool carry = flags->c;
+            _cpu_jump(cpu, mem, _cpu_read_imm16(cpu, mem), &carry, true, true);
+            break;
+        }
+        case 0xC7: {
+            _cpu_jump(cpu, mem, 0x0000, NULL, false, true);
+            break;
+        }
+        case 0xCF: {
+            _cpu_jump(cpu, mem, 0x0008, NULL, false, true);
+            break;
+        }
+        case 0xD7: {
+            _cpu_jump(cpu, mem, 0x0010, NULL, false, true);
+            break;
+        }
+        case 0xDF: {
+            _cpu_jump(cpu, mem, 0x0018, NULL, false, true);
+            break;
+        }
+        case 0xE7: {
+            _cpu_jump(cpu, mem, 0x0020, NULL, false, true);
+            break;
+        }
+        case 0xEF: {
+            _cpu_jump(cpu, mem, 0x0028, NULL, false, true);
+            break;
+        }
+        case 0xF7: {
+            _cpu_jump(cpu, mem, 0x0030, NULL, false, true);
+            break;
+        }
+        case 0xFF: {
+            _cpu_jump(cpu, mem, 0x0038, NULL, false, true);
+            break;
+        }
+        case 0xC9: {
+            _cpu_jump(cpu, mem, _cpu_stack_pop(cpu, mem), NULL, false, false);
+            break;
+        }
+        case 0xC0: {
+            bool zero = flags->z;
+            _cpu_jump(cpu, mem, _cpu_stack_pop(cpu, mem), &zero, false, false);
+            break;
+        }
+        case 0xC8: {
+            bool zero = flags->z;
+            _cpu_jump(cpu, mem, _cpu_stack_pop(cpu, mem), &zero, true, false);
+            break;
+        }
+        case 0xD0: {
+            bool carry = flags->c;
+            _cpu_jump(cpu, mem, _cpu_stack_pop(cpu, mem), &carry, false, false);
+            break;
+        }
+        case 0xD8: {
+            bool carry = flags->c;
+            _cpu_jump(cpu, mem, _cpu_stack_pop(cpu, mem), &carry, true, false);
+            break;
+        }
+        case 0xD9: {
+            _cpu_jump(cpu, mem, _cpu_stack_pop(cpu, mem), NULL, false, false);
+            cpu->ei_state = ARMSTATE_ARMED;
             break;
         }
     }
