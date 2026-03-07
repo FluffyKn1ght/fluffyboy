@@ -24,10 +24,9 @@ typedef union {
 } cpu_f_register_t;
 
 typedef struct {
-    int8_t cycles;
     int8_t size;
     char disasm[32];
-} cpu_result_t;
+} cpu_disassembly_t;
 
 typedef struct {
     cpu_word_register_t af, bc, de, hl;
@@ -37,7 +36,8 @@ typedef struct {
     cpu_arm_state_t ei_state;
     bool halted;
     bool stopped;
-    cpu_result_t result;
+    cpu_disassembly_t inst_disasm;
 } cpu_state_t;
 
-void cpu_advance(cpu_state_t* cpu, memory_t* mem);
+void cpu_step(cpu_state_t* cpu, memory_t* mem);
+void cpu_disassemble(cpu_state_t* cpu, memory_t* mem, uint16_t pc_override);
