@@ -35,6 +35,7 @@ typedef struct {
     bool ime;
     cpu_arm_state_t ei_state;
     bool halted;
+    bool halt_bug;
     bool stopped;
     cpu_disassembly_t inst_disasm;
     uint8_t last_imm8;

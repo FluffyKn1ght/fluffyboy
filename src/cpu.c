@@ -221,9 +221,19 @@ void _cpu_add16(cpu_state_t* cpu, uint16_t* operand_a, uint16_t* operand_b) {
     _cpu_synchronize(8);
 }
 
-void _cpu_stop(cpu_state_t* cpu) {
-    // TODO: Implement accurate behavior
-    cpu->stopped = true;
+void _cpu_stop(cpu_state_t* cpu, memory_t* mem) {
+    if ((mem_read(mem, 0xFF00) & 0xF) != 0xF) {
+        if (!(mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF))) {
+            cpu->halted = true;
+            cpu->pc++;
+        }
+    } else {
+        cpu->stopped = true;
+        mem_write(mem, 0xFF04, 0x00);
+        if (!(mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF))) {
+            cpu->pc++;
+        }
+    }
 }
 
 void _cpu_swap8(cpu_state_t* cpu, uint8_t* operand) {
@@ -749,7 +759,40 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
     }
 }
 
+void _cpu_service_interrupt(cpu_state_t* cpu, memory_t* mem) {
+
+}
+
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
+    if (cpu->stopped) {
+        if ((mem_read(mem, 0xFF00) & 0xF) != 0xF) {
+            cpu->stopped = false;
+        } else {
+            return;
+        }
+    }
+
+    if (cpu->halted) {
+        if (mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF)) {
+            cpu->halted = false;
+            _cpu_service_interrupt(cpu, mem);
+            if (cpu->halt_bug) {
+                cpu->halt_bug = false;
+                cpu->pc--;
+            }
+        } else {
+            _cpu_synchronize(4);
+            return;
+        }
+    }
+
+    if (cpu->ei_state == ARMSTATE_ARMED) {
+        cpu->ei_state = ARMSTATE_ACTIVE;
+    } else if (cpu->ei_state == ARMSTATE_ACTIVE) {
+        cpu->ime = true;
+        cpu->ei_state = ARMSTATE_NOT_ARMED;
+    }
+
     uint8_t opcode = mem_read(mem, cpu->pc);
     cpu->pc++;
 
@@ -1674,16 +1717,18 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0x76: {
             cpu->halted = true;
+            cpu->halt_bug = (!cpu->ime && (mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF)));
             _cpu_synchronize(4);
             break;
         }
         case 0x10: {
-            _cpu_stop(cpu);
+            _cpu_stop(cpu, mem);
             _cpu_synchronize(4);
             break;
         }
         case 0xF3: {
             cpu->ime = false;
+            cpu->ei_state = ARMSTATE_NOT_ARMED;
             _cpu_synchronize(4);
             break;
         }
