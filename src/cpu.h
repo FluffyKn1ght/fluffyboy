@@ -37,10 +37,12 @@ typedef struct {
     bool halted;
     bool halt_bug;
     bool stopped;
+    bool jammed;
     cpu_disassembly_t inst_disasm;
     uint8_t last_imm8;
     uint16_t last_imm16;
 } cpu_state_t;
 
+cpu_state_t* cpu_create();
+void cpu_destroy(cpu_state_t* cpu);
 void cpu_step(cpu_state_t* cpu, memory_t* mem);
-void cpu_disassemble(cpu_state_t* cpu, memory_t* mem, uint16_t pc_override);

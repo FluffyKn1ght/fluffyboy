@@ -49,3 +49,4 @@ typedef struct {
 } cartridge_t;
 
 cartridge_t* cart_open_file(char* path);
+void cart_destroy(cartridge_t* cart);

@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void _cpu_synchronize(uint8_t cycles) {
     // TODO: Implement
@@ -756,14 +757,18 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
             _cpu_bit_change(cpu, &(cpu->af.high), (_cpu_read_imm8(cpu, mem) & 0x7), true);
             break;
         }
+        default: {
+            cpu->jammed = true;
+            break;
+        }
     }
 }
 
-void _cpu_service_interrupt(cpu_state_t* cpu, memory_t* mem) {
-
-}
-
 void cpu_step(cpu_state_t* cpu, memory_t* mem) {
+    if (cpu->jammed) {
+        return;
+    }
+
     if (cpu->stopped) {
         if ((mem_read(mem, 0xFF00) & 0xF) != 0xF) {
             cpu->stopped = false;
@@ -775,7 +780,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     if (cpu->halted) {
         if (mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF)) {
             cpu->halted = false;
-            _cpu_service_interrupt(cpu, mem);
+            goto interrupts;
             if (cpu->halt_bug) {
                 cpu->halt_bug = false;
                 cpu->pc--;
@@ -1896,8 +1901,13 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             cpu->ei_state = ARMSTATE_ARMED;
             break;
         }
+        default: {
+            cpu->jammed = true;
+            break;
+        }
     }
 
+    interrupts:
     if (cpu->ime) {
         cpu->ime = false;
         cpu->ei_state = ARMSTATE_NOT_ARMED; // TODO: Test if this is correct
@@ -1927,4 +1937,13 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             }
         }
     }
+}
+
+cpu_state_t* cpu_create() {
+    return calloc(1, sizeof(cpu_state_t));
+}
+
+void cpu_destroy(cpu_state_t* cpu) {
+    cpu->jammed = true;
+    free(cpu);
 }

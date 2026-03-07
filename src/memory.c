@@ -1,5 +1,19 @@
 #include "memory.h"
 #include <stdint.h>
+#include <stdlib.h>
+
+memory_t* mem_create(cartridge_t* cart) {
+    memory_t* mem = calloc(1, sizeof(memory_t));
+
+    mem->cart = cart;
+
+    return mem;
+}
+
+void mem_destroy(memory_t* mem) {
+    cart_destroy(mem->cart);
+    free(mem);
+}
 
 uint8_t mem_read(memory_t* mem, uint16_t address) {
     // TODO: Implement
