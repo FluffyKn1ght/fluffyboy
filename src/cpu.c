@@ -329,6 +329,23 @@ void _cpu_shift_right(cpu_state_t* cpu, uint8_t* operand, bool keep_msb) {
     _cpu_synchronize(4);
 }
 
+void _cpu_bit_test(cpu_state_t* cpu, uint8_t* operand, _BitInt(3) bit) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+
+    flags->n = 0;
+    flags->h = 1;
+
+    flags->z = (*operand & (0x1 << bit)) ? 1 : 0;
+}
+
+void _cpu_bit_change(cpu_state_t* cpu, uint8_t* operand, _BitInt(3) bit, bool set) {
+    if (set) {
+        *operand |= (0x1 << bit);
+    } else {
+        *operand &= ~(0x1 << bit);
+    }
+}
+
 void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
     _cpu_synchronize(4);
     uint8_t opcode = mem_read(mem, cpu->pc);
@@ -607,6 +624,108 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0x3F: {
             _cpu_shift_right(cpu, &(cpu->af.high), false);
+            break;
+        }
+        case 0x40: {
+            _cpu_bit_test(cpu, &(cpu->bc.high), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0x41: {
+            _cpu_bit_test(cpu, &(cpu->bc.low), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0x42: {
+            _cpu_bit_test(cpu, &(cpu->de.high), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0x43: {
+            _cpu_bit_test(cpu, &(cpu->de.low), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0x44: {
+            _cpu_bit_test(cpu, &(cpu->hl.high), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0x45: {
+            _cpu_bit_test(cpu, &(cpu->hl.low), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0x46: {
+            uint8_t value = _cpu_read_hl_addr(cpu, mem);
+            _cpu_bit_test(cpu, &value, (_cpu_read_imm8(cpu, mem) & 0x7));
+            _cpu_synchronize(4);
+            break;
+        }
+        case 0x47: {
+            _cpu_bit_test(cpu, &(cpu->af.high), (_cpu_read_imm8(cpu, mem) & 0x7));
+            break;
+        }
+        case 0xC0: {
+            _cpu_bit_change(cpu, &(cpu->bc.high), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0xC1: {
+            _cpu_bit_change(cpu, &(cpu->bc.low), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0xC2: {
+            _cpu_bit_change(cpu, &(cpu->de.high), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0xC3: {
+            _cpu_bit_change(cpu, &(cpu->de.low), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0xC4: {
+            _cpu_bit_change(cpu, &(cpu->hl.high), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0xC5: {
+            _cpu_bit_change(cpu, &(cpu->hl.low), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0xC6: {
+            uint8_t value = _cpu_read_hl_addr(cpu, mem);
+            _cpu_bit_change(cpu, &value, (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            _cpu_write_hl_addr(cpu, mem, value);
+            break;
+        }
+        case 0xC7: {
+            _cpu_bit_change(cpu, &(cpu->af.high), (_cpu_read_imm8(cpu, mem) & 0x7), false);
+            break;
+        }
+        case 0x80: {
+            _cpu_bit_change(cpu, &(cpu->bc.high), (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            break;
+        }
+        case 0x81: {
+            _cpu_bit_change(cpu, &(cpu->bc.low), (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            break;
+        }
+        case 0x82: {
+            _cpu_bit_change(cpu, &(cpu->de.high), (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            break;
+        }
+        case 0x83: {
+            _cpu_bit_change(cpu, &(cpu->de.low), (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            break;
+        }
+        case 0x84: {
+            _cpu_bit_change(cpu, &(cpu->hl.high), (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            break;
+        }
+        case 0x85: {
+            _cpu_bit_change(cpu, &(cpu->hl.low), (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            break;
+        }
+        case 0x86: {
+            uint8_t value = _cpu_read_hl_addr(cpu, mem);
+            _cpu_bit_change(cpu, &value, (_cpu_read_imm8(cpu, mem) & 0x7), true);
+            _cpu_write_hl_addr(cpu, mem, value);
+            break;
+        }
+        case 0x87: {
+            _cpu_bit_change(cpu, &(cpu->af.high), (_cpu_read_imm8(cpu, mem) & 0x7), true);
             break;
         }
     }
