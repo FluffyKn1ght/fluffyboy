@@ -37,6 +37,8 @@ typedef struct {
     bool halted;
     bool stopped;
     cpu_disassembly_t inst_disasm;
+    uint8_t last_imm8;
+    uint16_t last_imm16;
 } cpu_state_t;
 
 void cpu_step(cpu_state_t* cpu, memory_t* mem);
