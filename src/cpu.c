@@ -248,6 +248,7 @@ void _cpu_rotate_left(cpu_state_t* cpu, uint8_t* operand) {
     *operand <<= 1;
     *operand |= edge_bit;
 
+    flags->byte = 0;
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
@@ -262,6 +263,7 @@ void _cpu_rotate_right(cpu_state_t* cpu, uint8_t* operand) {
     *operand >>= 1;
     *operand |= (edge_bit << 7);
 
+    flags->byte = 0;
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
@@ -275,6 +277,7 @@ void _cpu_rotate_left_thru_carry(cpu_state_t* cpu, uint8_t* operand) {
     *operand <<= 1;
     *operand |= (edge_bit);
 
+    flags->byte = 0;
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
@@ -289,6 +292,37 @@ void _cpu_rotate_right_thru_carry(cpu_state_t* cpu, uint8_t* operand) {
     *operand >>= 1;
     *operand |= (edge_bit << 7);
 
+    flags->byte = 0;
+    flags->c = edge_bit;
+    flags->z = (*operand == 0);
+
+    _cpu_synchronize(4);
+}
+
+void _cpu_shift_left(cpu_state_t* cpu, uint8_t* operand) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+
+    uint8_t edge_bit = *operand >> 7;
+    *operand <<= 1;
+
+    flags->byte = 0;
+    flags->c = edge_bit;
+    flags->z = (*operand == 0);
+
+    _cpu_synchronize(4);
+}
+
+void _cpu_shift_right(cpu_state_t* cpu, uint8_t* operand, bool keep_msb) {
+    cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
+
+    uint8_t msb = *operand & 0x80;
+    uint8_t edge_bit = *operand & 0x1;
+    *operand >>= 1;
+    if (keep_msb) {
+        *operand |= (msb);
+    }
+
+    flags->byte = 0;
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
@@ -399,6 +433,7 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
             uint8_t value = _cpu_read_hl_addr(cpu, mem);
             _cpu_rotate_left_thru_carry(cpu, &value);
             _cpu_write_hl_addr(cpu, mem, value);
+            break;
         }
         case 0x17: {
             _cpu_rotate_left_thru_carry(cpu, &(cpu->af.high));
@@ -432,6 +467,7 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
             uint8_t value = _cpu_read_hl_addr(cpu, mem);
             _cpu_rotate_right(cpu, &value);
             _cpu_write_hl_addr(cpu, mem, value);
+            break;
         }
         case 0x0F: {
             _cpu_rotate_right(cpu, &(cpu->af.high));
@@ -465,9 +501,112 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
             uint8_t value = _cpu_read_hl_addr(cpu, mem);
             _cpu_rotate_right_thru_carry(cpu, &value);
             _cpu_write_hl_addr(cpu, mem, value);
+            break;
         }
         case 0x1F: {
             _cpu_rotate_left_thru_carry(cpu, &(cpu->af.high));
+            break;
+        }
+        case 0x20: {
+            _cpu_shift_left(cpu, &(cpu->bc.high));
+            break;
+        }
+        case 0x21: {
+            _cpu_shift_left(cpu, &(cpu->bc.low));
+            break;
+        }
+        case 0x22: {
+            _cpu_shift_left(cpu, &(cpu->de.high));
+            break;
+        }
+        case 0x23: {
+            _cpu_shift_left(cpu, &(cpu->de.low));
+            break;
+        }
+        case 0x24: {
+            _cpu_shift_left(cpu, &(cpu->hl.high));
+            break;
+        }
+        case 0x25: {
+            _cpu_shift_left(cpu, &(cpu->hl.low));
+            break;
+        }
+        case 0x26: {
+            uint8_t value = _cpu_read_hl_addr(cpu, mem);
+            _cpu_shift_left(cpu, &value);
+            _cpu_write_hl_addr(cpu, mem, value);
+            break;
+        }
+        case 0x27: {
+            _cpu_shift_left(cpu, &(cpu->af.high));
+            break;
+        }
+        case 0x28: {
+            _cpu_shift_right(cpu, &(cpu->bc.high), true);
+            break;
+        }
+        case 0x29: {
+            _cpu_shift_right(cpu, &(cpu->bc.low), true);
+            break;
+        }
+        case 0x2A: {
+            _cpu_shift_right(cpu, &(cpu->de.high), true);
+            break;
+        }
+        case 0x2B: {
+            _cpu_shift_right(cpu, &(cpu->de.low), true);
+            break;
+        }
+        case 0x2C: {
+            _cpu_shift_right(cpu, &(cpu->hl.high), true);
+            break;
+        }
+        case 0x2D: {
+            _cpu_shift_right(cpu, &(cpu->hl.low), true);
+            break;
+        }
+        case 0x2E: {
+            uint8_t value = _cpu_read_hl_addr(cpu, mem);
+            _cpu_shift_right(cpu, &value, true);
+            _cpu_write_hl_addr(cpu, mem, value);
+            break;
+        }
+        case 0x2F: {
+            _cpu_shift_right(cpu, &(cpu->af.high), true);
+            break;
+        }
+        case 0x38: {
+            _cpu_shift_right(cpu, &(cpu->bc.high), false);
+            break;
+        }
+        case 0x39: {
+            _cpu_shift_right(cpu, &(cpu->bc.low), false);
+            break;
+        }
+        case 0x3A: {
+            _cpu_shift_right(cpu, &(cpu->de.high), false);
+            break;
+        }
+        case 0x3B: {
+            _cpu_shift_right(cpu, &(cpu->de.low), false);
+            break;
+        }
+        case 0x3C: {
+            _cpu_shift_right(cpu, &(cpu->hl.high), false);
+            break;
+        }
+        case 0x3D: {
+            _cpu_shift_right(cpu, &(cpu->hl.low), false);
+            break;
+        }
+        case 0x3E: {
+            uint8_t value = _cpu_read_hl_addr(cpu, mem);
+            _cpu_shift_right(cpu, &value, false);
+            _cpu_write_hl_addr(cpu, mem, value);
+            break;
+        }
+        case 0x3F: {
+            _cpu_shift_right(cpu, &(cpu->af.high), false);
             break;
         }
     }
