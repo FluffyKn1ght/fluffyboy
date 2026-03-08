@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "ppu.h"
-#include "memory.h"
 
 enum: uint8_t {
     PPUSTATE_LY00_HBLANK,
@@ -21,6 +20,10 @@ enum: uint8_t {
     LCDCINT_OAM = 0x20,
     LCDCINT_LYC = 0x40,
 };
+
+lcdc_register_t _ppu_get_lcdc(memory_t* mem) {
+    return (lcdc_register_t)mem_read_ppu(mem, 0xFF41);
+}
 
 void _ppu_set_stat_mode(memory_t* mem, unsigned _BitInt(2) mode) {
     uint8_t stat = mem_read_ppu(mem, 0xFF41);
@@ -171,6 +174,19 @@ void ppu_destroy(ppu_state_t* ppu) {
     free(ppu);
 }
 
-void ppu_step(ppu_state_t* ppu, memory_t* mem) {
+void ppu_step(ppu_state_t* ppu, memory_t* mem, uint8_t clocks) {
+    uint8_t clock_counter = clocks;
 
+    while (clock_counter >= ppu->cycles_til_next_state) {
+        clock_counter -= ppu->cycles_til_next_state;
+
+        lcdc_register_t lcdc = _ppu_get_lcdc(mem);
+
+        if (!lcdc.lcd_enable) {
+            ppu->ly = 0;
+            ppu->cycles_til_next_state = 70224;
+            return;
+        }
+    }
+    _ppu_switch_to_next_state(ppu, mem);
 }
