@@ -1,3 +1,6 @@
+#ifndef _CPU_H
+#define _CPU_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "memory.h"
@@ -48,3 +51,5 @@ typedef struct {
 cpu_state_t* cpu_create();
 void cpu_destroy(cpu_state_t* cpu);
 void cpu_step(cpu_state_t* cpu, memory_t* mem);
+
+#endif

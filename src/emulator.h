@@ -1,3 +1,6 @@
+#ifndef _EMULATOR_H
+#define _EMULATOR_H
+
 #include "cpu.h"
 
 typedef struct {
@@ -15,3 +18,5 @@ typedef enum: uint8_t {
 fluffy_emu_state_t* fluffy_emu_create();
 void fluffy_emu_destroy(fluffy_emu_state_t* emu);
 fluffy_emu_error_t fluffy_emu_step(fluffy_emu_state_t* emu);
+
+#endif

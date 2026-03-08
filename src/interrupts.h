@@ -1,3 +1,6 @@
+#ifndef _INTERRUPTS_H
+#define _INTERRUPTS_H
+
 #include <stdint.h>
 
 typedef union {
@@ -12,3 +15,5 @@ typedef union {
     vblank: 1;
     uint8_t byte;
 } interrupt_register_t;
+
+#endif

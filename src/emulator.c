@@ -1,5 +1,5 @@
 #include "emulator.h"
-#include "stdlib.h"
+#include <stdlib.h>
 
 void _fluffy_emu_synchronize(void* emu_ptr, uint16_t cycles) {
     fluffy_emu_state_t* emu = (fluffy_emu_state_t*)emu_ptr;

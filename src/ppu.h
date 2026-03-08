@@ -1,3 +1,6 @@
+#ifndef _PPU_H
+#define _PPU_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "memory.h"
@@ -42,3 +45,5 @@ typedef union {
 ppu_state_t* ppu_create();
 void ppu_destroy(ppu_state_t* ppu);
 void ppu_step(ppu_state_t* ppu, memory_t* mem, uint8_t clocks);
+
+#endif

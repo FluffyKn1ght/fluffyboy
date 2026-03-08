@@ -1,3 +1,6 @@
+#ifndef _CARTRIDGE_H
+#define _CARTRIDGE_H
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -50,3 +53,5 @@ typedef struct {
 
 cartridge_t* cart_open_file(char* path);
 void cart_destroy(cartridge_t* cart);
+
+#endif

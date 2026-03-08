@@ -1,3 +1,6 @@
+#ifndef _MEMORY_H
+#define _MEMORY_H
+
 #include <stdint.h>
 #include "cartridge.h"
 #include "interrupts.h"
@@ -19,3 +22,5 @@ void mem_write(memory_t* mem, uint16_t address, uint8_t value);
 
 interrupt_register_t mem_get_intflag(memory_t* mem);
 interrupt_register_t mem_get_intenable(memory_t* mem);
+
+#endif
