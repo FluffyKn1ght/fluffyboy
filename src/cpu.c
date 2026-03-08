@@ -1913,27 +1913,27 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         cpu->ime = false;
         cpu->ei_state = ARMSTATE_NOT_ARMED; // TODO: Test if this is correct
 
-        uint8_t int_flag = mem_read_cpu(mem, 0xFF0F);
-        uint8_t int_enable = mem_read_cpu(mem, 0xFFFF);
+        interrupt_register_t int_flag = mem_get_intflag(mem);
+        interrupt_register_t int_enable = mem_get_intenable(mem);
 
-        if (int_flag & int_enable) {
+        if (int_flag.byte & int_enable.byte) {
             _cpu_stack_push(cpu, mem, cpu->pc);
             _cpu_synchronize(mem, 12);
 
-            if ((int_flag & 0x1) & (int_enable & 0x1)) {
-                int_flag &= ~(0x1);
+            if (int_flag.vblank && int_enable.vblank) {
+                int_flag.vblank = false;
                 cpu->pc = 0x0040;
-            } else if ((int_flag & 0x2) & (int_enable & 0x2)) {
-                int_flag &= ~(0x2);
+            } else if (int_flag.lcd_stat && int_enable.lcd_stat) {
+                int_flag.lcd_stat = false;
                 cpu->pc = 0x0048;
-            } else if ((int_flag & 0x4) & (int_enable & 0x4)) {
-                int_flag &= ~(0x4);
+            } else if (int_flag.timer && int_enable.timer) {
+                int_flag.timer = false;
                 cpu->pc = 0x0050;
-            } else if ((int_flag & 0x8) & (int_enable & 0x8)) {
-                int_flag &= ~(0x8);
+            } else if (int_flag.serial && int_enable.serial) {
+                int_flag.serial = false;
                 cpu->pc = 0x0058;
-            } else if ((int_flag & 0x10) & (int_enable & 0x10)) {
-                int_flag &= ~(0x10);
+            } else if (int_flag.joypad && int_enable.joypad) {
+                int_flag.joypad = false;
                 cpu->pc = 0x0060;
             }
         }
