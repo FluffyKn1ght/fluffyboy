@@ -29,3 +29,11 @@ void mem_write(memory_t* mem, uint16_t address, uint8_t value) {
     // TODO: Implement
     return;
 }
+
+interrupt_register_t mem_get_intflag(memory_t* mem) {
+    return (interrupt_register_t)mem_read(mem, 0xFF0F);
+}
+
+interrupt_register_t mem_get_intenable(memory_t* mem) {
+    return (interrupt_register_t)mem_read(mem, 0xFFFF);
+}

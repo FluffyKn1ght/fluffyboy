@@ -9,7 +9,7 @@ void _cpu_synchronize(memory_t* mem, uint8_t cycles) {
 }
 
 uint8_t _cpu_read_imm8(cpu_state_t* cpu, memory_t* mem) {
-    uint8_t value = mem_read(mem, cpu->pc);
+    uint8_t value = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
     _cpu_synchronize(mem, 4);
     cpu->last_imm8 = value;
@@ -17,10 +17,10 @@ uint8_t _cpu_read_imm8(cpu_state_t* cpu, memory_t* mem) {
 }
 
 uint16_t _cpu_read_imm16(cpu_state_t* cpu, memory_t* mem) {
-    uint8_t value_low_byte = mem_read(mem, cpu->pc);
+    uint8_t value_low_byte = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
     _cpu_synchronize(mem, 4);
-    uint8_t value_high_byte = mem_read(mem, cpu->pc);
+    uint8_t value_high_byte = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
     _cpu_synchronize(mem, 4);
     uint16_t value = (value_low_byte) | (value_high_byte << 8);
@@ -29,13 +29,13 @@ uint16_t _cpu_read_imm16(cpu_state_t* cpu, memory_t* mem) {
 }
 
 uint8_t _cpu_read_hl_addr(cpu_state_t* cpu, memory_t* mem) {
-    uint8_t value = mem_read(mem, cpu->hl.word);
+    uint8_t value = mem_read_cpu(mem, cpu->hl.word);
     _cpu_synchronize(mem, 4);
     return value;
 }
 
 void _cpu_write_hl_addr(cpu_state_t* cpu, memory_t* mem, uint8_t value) {
-    mem_write(mem, cpu->hl.word, value);
+    mem_write_cpu(mem, cpu->hl.word, value);
     _cpu_synchronize(mem, 4);
 }
 
@@ -50,16 +50,16 @@ void _cpu_load16(memory_t* mem, uint16_t* dest, uint16_t source) {
 }
 
 void _cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
-    mem_write(mem, cpu->sp, value & 0xFF);
+    mem_write_cpu(mem, cpu->sp, value & 0xFF);
     _cpu_synchronize(mem, 4);
     cpu->sp--;
-    mem_write(mem, cpu->sp, (value & 0xFF00) >> 8);
+    mem_write_cpu(mem, cpu->sp, (value & 0xFF00) >> 8);
     _cpu_synchronize(mem, 8);
     cpu->sp--;
 }
 
 uint16_t _cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
-    uint16_t value = mem_readw(mem, cpu->sp);
+    uint16_t value = mem_readw_cpu(mem, cpu->sp);
     cpu->sp += 2;
     _cpu_synchronize(mem, 8);
     return value;
@@ -223,15 +223,15 @@ void _cpu_add16(cpu_state_t* cpu, memory_t* mem, uint16_t* operand_a, uint16_t* 
 }
 
 void _cpu_stop(cpu_state_t* cpu, memory_t* mem) {
-    if ((mem_read(mem, 0xFF00) & 0xF) != 0xF) {
-        if (!(mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF))) {
+    if ((mem_read_cpu(mem, 0xFF00) & 0xF) != 0xF) {
+        if (!(mem_read_cpu(mem, 0xFF0F) & mem_read_cpu(mem, 0xFFFF))) {
             cpu->halted = true;
             cpu->pc++;
         }
     } else {
         cpu->stopped = true;
-        mem_write(mem, 0xFF04, 0x00);
-        if (!(mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF))) {
+        mem_write_cpu(mem, 0xFF04, 0x00);
+        if (!(mem_read_cpu(mem, 0xFF0F) & mem_read_cpu(mem, 0xFFFF))) {
             cpu->pc++;
         }
     }
@@ -377,7 +377,7 @@ void _cpu_jump(cpu_state_t* cpu, memory_t* mem, uint16_t where, void* condition,
 
 void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
     _cpu_synchronize(mem, 4);
-    uint8_t opcode = mem_read(mem, cpu->pc);
+    uint8_t opcode = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
 
     cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
@@ -770,7 +770,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     }
 
     if (cpu->stopped) {
-        if ((mem_read(mem, 0xFF00) & 0xF) != 0xF) {
+        if ((mem_read_cpu(mem, 0xFF00) & 0xF) != 0xF) {
             cpu->stopped = false;
         } else {
             return;
@@ -778,7 +778,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
     }
 
     if (cpu->halted) {
-        if (mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF)) {
+        if (mem_read_cpu(mem, 0xFF0F) & mem_read_cpu(mem, 0xFFFF)) {
             cpu->halted = false;
             goto interrupts;
             if (cpu->halt_bug) {
@@ -798,7 +798,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         cpu->ei_state = ARMSTATE_NOT_ARMED;
     }
 
-    uint8_t opcode = mem_read(mem, cpu->pc);
+    uint8_t opcode = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
 
     cpu_f_register_t* flags = (cpu_f_register_t*)&(cpu->af.low);
@@ -1093,17 +1093,17 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x0A: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read(mem, cpu->bc.word));
+            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, cpu->bc.word));
             _cpu_synchronize(mem, 4);
             break;
         }
         case 0x1A: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read(mem, cpu->de.word));
+            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, cpu->de.word));
             _cpu_synchronize(mem, 4);
             break;
         }
         case 0xFA: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read(mem, _cpu_read_imm16(cpu, mem)));
+            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, _cpu_read_imm16(cpu, mem)));
             _cpu_synchronize(mem, 4);
             break;
         }
@@ -1112,27 +1112,27 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x02: {
-            mem_write(mem, cpu->bc.word, cpu->af.high);
+            mem_write_cpu(mem, cpu->bc.word, cpu->af.high);
             _cpu_synchronize(mem, 8);
             break;
         }
         case 0x12: {
-            mem_write(mem, cpu->de.word, cpu->af.high);
+            mem_write_cpu(mem, cpu->de.word, cpu->af.high);
             _cpu_synchronize(mem, 8);
             break;
         }
         case 0xEA: {
-            mem_write(mem, _cpu_read_imm16(cpu, mem), cpu->af.high);
+            mem_write_cpu(mem, _cpu_read_imm16(cpu, mem), cpu->af.high);
             _cpu_synchronize(mem, 4);
             break;
         }
         case 0xF2: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read(mem, 0xFF00 + cpu->bc.low));
+            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, 0xFF00 + cpu->bc.low));
             _cpu_synchronize(mem, 4);
             break;
         }
         case 0xE2: {
-            mem_write(mem, 0xFF00 + cpu->bc.low, cpu->af.high);
+            mem_write_cpu(mem, 0xFF00 + cpu->bc.low, cpu->af.high);
             _cpu_synchronize(mem, 8);
         }
         case 0x3A: {
@@ -1158,12 +1158,12 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0xE0: {
-            mem_write(mem, 0xFF00 + _cpu_read_imm8(cpu, mem), cpu->af.high);
+            mem_write_cpu(mem, 0xFF00 + _cpu_read_imm8(cpu, mem), cpu->af.high);
             _cpu_synchronize(mem, 8);
             break;
         }
         case 0xF0: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read(mem, 0xFF00 + _cpu_read_imm8(cpu, mem)));
+            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, 0xFF00 + _cpu_read_imm8(cpu, mem)));
             _cpu_synchronize(mem, 4);
             break;
         }
@@ -1203,10 +1203,10 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             break;
         }
         case 0x08: {
-            mem_write(mem, _cpu_read_imm16(cpu, mem), cpu->sp & 0xFF);
+            mem_write_cpu(mem, _cpu_read_imm16(cpu, mem), cpu->sp & 0xFF);
             _cpu_synchronize(mem, 4);
             cpu->last_imm16++;
-            mem_write(mem, cpu->last_imm16, (cpu->sp & 0xFF00) >> 8);
+            mem_write_cpu(mem, cpu->last_imm16, (cpu->sp & 0xFF00) >> 8);
             _cpu_synchronize(mem, 12);
             break;
         }
@@ -1723,7 +1723,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0x76: {
             cpu->halted = true;
-            cpu->halt_bug = (!cpu->ime && (mem_read(mem, 0xFF0F) & mem_read(mem, 0xFFFF)));
+            cpu->halt_bug = (!cpu->ime && (mem_read_cpu(mem, 0xFF0F) & mem_read_cpu(mem, 0xFFFF)));
             _cpu_synchronize(mem, 4);
             break;
         }
@@ -1913,8 +1913,8 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         cpu->ime = false;
         cpu->ei_state = ARMSTATE_NOT_ARMED; // TODO: Test if this is correct
 
-        uint8_t int_flag = mem_read(mem, 0xFF0F);
-        uint8_t int_enable = mem_read(mem, 0xFFFF);
+        uint8_t int_flag = mem_read_cpu(mem, 0xFF0F);
+        uint8_t int_enable = mem_read_cpu(mem, 0xFFFF);
 
         if (int_flag & int_enable) {
             _cpu_stack_push(cpu, mem, cpu->pc);
