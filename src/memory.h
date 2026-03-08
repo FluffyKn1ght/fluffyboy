@@ -13,9 +13,9 @@ uint8_t mem_read_cpu(memory_t* mem, uint16_t address);
 uint16_t mem_readw_cpu(memory_t* mem, uint16_t address);
 void mem_write_cpu(memory_t* mem, uint16_t address, uint8_t value);
 
-uint8_t mem_read_ppu(memory_t* mem, uint16_t address);
-uint16_t mem_readw_ppu(memory_t* mem, uint16_t address);
-void mem_write_ppu(memory_t* mem, uint16_t address, uint8_t value);
+uint8_t mem_read(memory_t* mem, uint16_t address);
+uint16_t mem_readw(memory_t* mem, uint16_t address);
+void mem_write(memory_t* mem, uint16_t address, uint8_t value);
 
 interrupt_register_t mem_get_intflag(memory_t* mem);
 interrupt_register_t mem_get_intenable(memory_t* mem);

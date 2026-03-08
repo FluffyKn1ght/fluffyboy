@@ -22,13 +22,13 @@ enum: uint8_t {
 };
 
 lcdc_register_t _ppu_get_lcdc(memory_t* mem) {
-    return (lcdc_register_t)mem_read_ppu(mem, 0xFF41);
+    return (lcdc_register_t)mem_read(mem, 0xFF41);
 }
 
 void _ppu_set_stat_mode(memory_t* mem, unsigned _BitInt(2) mode) {
-    uint8_t stat = mem_read_ppu(mem, 0xFF41);
+    uint8_t stat = mem_read(mem, 0xFF41);
     stat = (stat & 0b11111100) | mode;
-    mem_write_ppu(mem, 0xFF41, stat);
+    mem_write(mem, 0xFF41, stat);
 }
 
 void _ppu_request_lcdc_interrupt(ppu_state_t* ppu, memory_t* mem, uint8_t reason) {
@@ -37,7 +37,7 @@ void _ppu_request_lcdc_interrupt(ppu_state_t* ppu, memory_t* mem, uint8_t reason
     if (!ppu->lcdc_interrupt) {
         interrupt_register_t int_flag = mem_get_intflag(mem);
         int_flag.lcd_stat = 1;
-        mem_write_ppu(mem, 0xFF0F, int_flag.byte);
+        mem_write(mem, 0xFF0F, int_flag.byte);
         ppu->lcdc_interrupt = true;
     }
 }
@@ -45,29 +45,29 @@ void _ppu_request_lcdc_interrupt(ppu_state_t* ppu, memory_t* mem, uint8_t reason
 void _ppu_rearm_lcdc_interrupt(ppu_state_t* ppu, memory_t* mem) {
     interrupt_register_t int_flag = mem_get_intflag(mem);
     int_flag.lcd_stat = 0;
-    mem_write_ppu(mem, 0xFF0F, int_flag.byte);
+    mem_write(mem, 0xFF0F, int_flag.byte);
     ppu->lcdc_interrupt = false;
 }
 
 void _ppu_raise_vblank_interrupt(ppu_state_t* ppu, memory_t* mem) {
     interrupt_register_t int_flag = mem_get_intflag(mem);
     int_flag.vblank = 1;
-    mem_write_ppu(mem, 0xFF0F, int_flag.byte);
+    mem_write(mem, 0xFF0F, int_flag.byte);
 }
 
 void _ppu_do_ly_lyc_check(ppu_state_t* ppu, memory_t* mem) {
-    uint8_t ly = mem_read_ppu(mem, 0xFF44);
-    uint8_t lyc = mem_read_ppu(mem, 0xFF45);
+    uint8_t ly = mem_read(mem, 0xFF44);
+    uint8_t lyc = mem_read(mem, 0xFF45);
 
     if (ly == lyc) {
-        uint8_t stat = mem_read_ppu(mem, 0xFF41);
+        uint8_t stat = mem_read(mem, 0xFF41);
         if (!(stat & 0x4)) {
             _ppu_request_lcdc_interrupt(ppu, mem, LCDCINT_LYC);
             stat |= 0x4;
         } else {
             stat &= ~(0x4);
         }
-        mem_write_ppu(mem, 0xFF41, stat);
+        mem_write(mem, 0xFF41, stat);
     }
 }
 
@@ -77,7 +77,7 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
         case PPUSTATE_LYXX_OAM: {
             _ppu_rearm_lcdc_interrupt(ppu, mem);
             _ppu_request_lcdc_interrupt(ppu, mem, LCDCINT_OAM);
-            ppu->scx_extended_states = (mem_read_ppu(mem, 0xFF43) & 0x4) ? true : false;
+            ppu->scx_extended_states = (mem_read(mem, 0xFF43) & 0x4) ? true : false;
 
             ppu->cycles_til_next_state = 80;
             ppu->next_internal_state = PPUSTATE_LYXX_OAMVRAM;
@@ -105,9 +105,9 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
         case PPUSTATE_LYXX_HBLANK_INC: {
             ppu->ly++;
 
-            uint8_t ly = mem_read_ppu(mem, 0xFF44);
+            uint8_t ly = mem_read(mem, 0xFF44);
             ly++;
-            mem_write_ppu(mem, 0xFF44, ly);
+            mem_write(mem, 0xFF44, ly);
 
             _ppu_do_ly_lyc_check(ppu, mem);
 
@@ -133,9 +133,9 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
         }
         case PPUSTATE_LY9X_VBLANK_INC: {
             ppu->ly++;
-            uint8_t ly = mem_read_ppu(mem, 0xFF44);
+            uint8_t ly = mem_read(mem, 0xFF44);
             ly++;
-            mem_write_ppu(mem, 0xFF44, ly);
+            mem_write(mem, 0xFF44, ly);
 
             _ppu_do_ly_lyc_check(ppu, mem);
 
@@ -149,7 +149,7 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
         }
         case PPUSTATE_LY00_VBLANK: {
             ppu->ly = 0;
-            mem_write_ppu(mem, 0xFF44, 0);
+            mem_write(mem, 0xFF44, 0);
 
             ppu->next_internal_state = PPUSTATE_LY00_HBLANK;
             ppu->cycles_til_next_state = 452;
