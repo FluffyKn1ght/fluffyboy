@@ -21,14 +21,19 @@ enum: uint8_t {
     LCDCINT_LYC = 0x40,
 };
 
+enum: uint8_t {
+    LCDMODE_HBLANK = 0,
+    LCDMODE_VBLANK = 1,
+    LCDMODE_OAM = 2,
+    LCDMODE_RENDER = 3
+};
+
 lcdc_register_t _ppu_get_lcdc(memory_t* mem) {
-    return (lcdc_register_t)mem_read(mem, 0xFF41);
+    return (lcdc_register_t)mem_read(mem, 0xFF40);
 }
 
-void _ppu_set_stat_mode(memory_t* mem, unsigned _BitInt(2) mode) {
-    uint8_t stat = mem_read(mem, 0xFF41);
-    stat = (stat & 0b11111100) | mode;
-    mem_write(mem, 0xFF41, stat);
+stat_register_t _ppu_get_stat(memory_t* mem) {
+    return (stat_register_t)mem_read(mem, 0xFF41);
 }
 
 void _ppu_request_lcdc_interrupt(ppu_state_t* ppu, memory_t* mem, uint8_t reason) {
@@ -84,7 +89,9 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
             break;
         }
         case PPUSTATE_LYXX_OAMVRAM: {
-            _ppu_set_stat_mode(mem, 3);
+            stat_register_t stat = _ppu_get_stat(mem);
+            stat.mode = LCDMODE_RENDER;
+            mem_write(mem, 0xFF41, stat.byte);
 
             // TODO: Sprites
 
@@ -95,7 +102,10 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
         case PPUSTATE_LYXX_HBLANK: {
             // TODO: Draw current scanline
 
-            _ppu_set_stat_mode(mem, 1);
+            stat_register_t stat = _ppu_get_stat(mem);
+            stat.mode = LCDMODE_HBLANK;
+            mem_write(mem, 0xFF41, stat.byte);
+
             _ppu_request_lcdc_interrupt(ppu, mem, LCDCINT_HBLANK);
 
             ppu->cycles_til_next_state = 200 - ((ppu->scx_extended_states) ? 4 : 0) - ppu->sprite_cycle_penatly;
@@ -122,7 +132,10 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
         }
         case PPUSTATE_LY9X_VBLANK: {
             if (ppu->ly == 144) {
-                _ppu_set_stat_mode(mem, 1);
+                stat_register_t stat = _ppu_get_stat(mem);
+                stat.mode = LCDMODE_VBLANK;
+                mem_write(mem, 0xFF41, stat.byte);
+
                 _ppu_raise_vblank_interrupt(ppu, mem);
                 _ppu_request_lcdc_interrupt(ppu, mem, LCDCINT_VBLANK);
 
@@ -156,7 +169,10 @@ void _ppu_switch_to_next_state(ppu_state_t* ppu, memory_t* mem) {
             break;
         }
         case PPUSTATE_LY00_HBLANK: {
-            _ppu_set_stat_mode(mem, 0);
+            stat_register_t stat = _ppu_get_stat(mem);
+            stat.mode = LCDMODE_HBLANK;
+            mem_write(mem, 0xFF41, stat.byte);
+
             ppu->next_internal_state = PPUSTATE_LYXX_OAM;
             ppu->cycles_til_next_state = 4;
             break;
