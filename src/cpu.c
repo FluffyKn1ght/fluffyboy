@@ -4,14 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void _cpu_synchronize(memory_t* mem, uint8_t cycles) {
-    // TODO: Implement
+void _cpu_synchronize(cpu_state_t* cpu, uint16_t cycles) {
+    cpu->synchronize(cpu->emu_struct_ptr, cycles);
 }
 
 uint8_t _cpu_read_imm8(cpu_state_t* cpu, memory_t* mem) {
     uint8_t value = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
     cpu->last_imm8 = value;
     return value;
 }
@@ -19,10 +19,10 @@ uint8_t _cpu_read_imm8(cpu_state_t* cpu, memory_t* mem) {
 uint16_t _cpu_read_imm16(cpu_state_t* cpu, memory_t* mem) {
     uint8_t value_low_byte = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
     uint8_t value_high_byte = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
     uint16_t value = (value_low_byte) | (value_high_byte << 8);
     cpu->last_imm16 = value;
     return value;
@@ -30,38 +30,38 @@ uint16_t _cpu_read_imm16(cpu_state_t* cpu, memory_t* mem) {
 
 uint8_t _cpu_read_hl_addr(cpu_state_t* cpu, memory_t* mem) {
     uint8_t value = mem_read_cpu(mem, cpu->hl.word);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
     return value;
 }
 
 void _cpu_write_hl_addr(cpu_state_t* cpu, memory_t* mem, uint8_t value) {
     mem_write_cpu(mem, cpu->hl.word, value);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
-void _cpu_load8(memory_t* mem, uint8_t* dest, uint8_t source) {
+void _cpu_load8(cpu_state_t* cpu, uint8_t* dest, uint8_t source) {
     *dest = source;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
-void _cpu_load16(memory_t* mem, uint16_t* dest, uint16_t source) {
+void _cpu_load16(cpu_state_t* cpu, uint16_t* dest, uint16_t source) {
     *dest = source;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_stack_push(cpu_state_t* cpu, memory_t* mem, uint16_t value) {
     mem_write_cpu(mem, cpu->sp, value & 0xFF);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
     cpu->sp--;
     mem_write_cpu(mem, cpu->sp, (value & 0xFF00) >> 8);
-    _cpu_synchronize(mem, 8);
+    _cpu_synchronize(cpu, 8);
     cpu->sp--;
 }
 
 uint16_t _cpu_stack_pop(cpu_state_t* cpu, memory_t* mem) {
     uint16_t value = mem_readw_cpu(mem, cpu->sp);
     cpu->sp += 2;
-    _cpu_synchronize(mem, 8);
+    _cpu_synchronize(cpu, 8);
     return value;
 }
 
@@ -86,7 +86,7 @@ void _cpu_add8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* ope
     }
 
     *operand_a = (uint8_t)(full_result & 0xFF);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_sub8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* operand_b, bool with_carry) {
@@ -112,7 +112,7 @@ void _cpu_sub8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* ope
     }
 
     *operand_a = (uint8_t)(full_result & 0xFF);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_and8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* operand_b) {
@@ -126,7 +126,7 @@ void _cpu_and8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* ope
     }
 
     *operand_a = result;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_or8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* operand_b) {
@@ -139,7 +139,7 @@ void _cpu_or8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* oper
     }
 
     *operand_a = result;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_xor8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* operand_b) {
@@ -152,7 +152,7 @@ void _cpu_xor8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* ope
     }
 
     *operand_a = result;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_cp8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* operand_b) {
@@ -164,7 +164,7 @@ void _cpu_cp8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand_a, uint8_t* oper
     flags->c = (*operand_a < *operand_b) ? 0 : 1;
     flags->z = (*operand_a == *operand_b) ? 1 : 0;
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_inc8(cpu_state_t* cpu, memory_t* mem, uint8_t* what) {
@@ -182,7 +182,7 @@ void _cpu_inc8(cpu_state_t* cpu, memory_t* mem, uint8_t* what) {
     }
 
     *what = (full_result & 0xFF);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_dec8(cpu_state_t* cpu, memory_t* mem, uint8_t* what) {
@@ -201,7 +201,7 @@ void _cpu_dec8(cpu_state_t* cpu, memory_t* mem, uint8_t* what) {
     }
 
     *what = (full_result & 0xFF);
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_add16(cpu_state_t* cpu, memory_t* mem, uint16_t* operand_a, uint16_t* operand_b) {
@@ -219,7 +219,7 @@ void _cpu_add16(cpu_state_t* cpu, memory_t* mem, uint16_t* operand_a, uint16_t* 
     }
 
     *operand_a = (uint16_t)(*operand_a & 0xFFFF);
-    _cpu_synchronize(mem, 8);
+    _cpu_synchronize(cpu, 8);
 }
 
 void _cpu_stop(cpu_state_t* cpu, memory_t* mem) {
@@ -248,7 +248,7 @@ void _cpu_swap8(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
     uint8_t lower_nibble = *operand & 0xF;
     uint8_t upper_nibble = (*operand & 0xF0) >> 4;
     *operand = (lower_nibble << 4) | upper_nibble;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_rotate_left(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
@@ -263,7 +263,7 @@ void _cpu_rotate_left(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_rotate_right(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
@@ -278,7 +278,7 @@ void _cpu_rotate_right(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_rotate_left_thru_carry(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
@@ -292,7 +292,7 @@ void _cpu_rotate_left_thru_carry(cpu_state_t* cpu, memory_t* mem, uint8_t* opera
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_rotate_right_thru_carry(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
@@ -307,7 +307,7 @@ void _cpu_rotate_right_thru_carry(cpu_state_t* cpu, memory_t* mem, uint8_t* oper
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_shift_left(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
@@ -320,7 +320,7 @@ void _cpu_shift_left(cpu_state_t* cpu, memory_t* mem, uint8_t* operand) {
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_shift_right(cpu_state_t* cpu, memory_t* mem, uint8_t* operand, bool keep_msb) {
@@ -337,7 +337,7 @@ void _cpu_shift_right(cpu_state_t* cpu, memory_t* mem, uint8_t* operand, bool ke
     flags->c = edge_bit;
     flags->z = (*operand == 0);
 
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 }
 
 void _cpu_bit_test(cpu_state_t* cpu, memory_t* mem, uint8_t* operand, _BitInt(3) bit) {
@@ -359,7 +359,7 @@ void _cpu_bit_change(cpu_state_t* cpu, memory_t* mem, uint8_t* operand, _BitInt(
 
 void _cpu_jump(cpu_state_t* cpu, memory_t* mem, uint16_t where, void* condition, bool cond_target, bool push_pc) {
     bool do_we_jump = (condition && (*(bool*)condition == cond_target)) || !condition;
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
 
     // jp not taken - +4 cycles
     // jp taken - +8 cycles
@@ -371,12 +371,12 @@ void _cpu_jump(cpu_state_t* cpu, memory_t* mem, uint16_t where, void* condition,
             _cpu_stack_push(cpu, mem, cpu->pc);
         }
         cpu->pc = where;
-        _cpu_synchronize(mem, 4);
+        _cpu_synchronize(cpu, 4);
     }
 }
 
 void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
-    _cpu_synchronize(mem, 4);
+    _cpu_synchronize(cpu, 4);
     uint8_t opcode = mem_read_cpu(mem, cpu->pc);
     cpu->pc++;
 
@@ -682,7 +682,7 @@ void _cpu_exec_prefixed(cpu_state_t* cpu, memory_t* mem) {
         case 0x46: {
             uint8_t value = _cpu_read_hl_addr(cpu, mem);
             _cpu_bit_test(cpu, mem,  &value, (_cpu_read_imm8(cpu, mem) & 0x7));
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x47: {
@@ -786,7 +786,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
                 cpu->pc--;
             }
         } else {
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             return;
         }
     }
@@ -805,446 +805,446 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
 
     switch (opcode) {
         case 0x06: {
-            _cpu_load8(mem, &(cpu->bc.high), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->bc.high), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x0E: {
-            _cpu_load8(mem, &(cpu->bc.low), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->bc.low), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x16: {
-            _cpu_load8(mem, &(cpu->de.high), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->de.high), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x1E: {
-            _cpu_load8(mem, &(cpu->de.low), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->de.low), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x26: {
-            _cpu_load8(mem, &(cpu->hl.high), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->hl.high), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x2E: {
-            _cpu_load8(mem, &(cpu->hl.low), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->hl.low), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x7F: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->af.high);
             break;
         }
         case 0x78: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->bc.high);
             break;
         }
         case 0x79: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->bc.low);
             break;
         }
         case 0x7A: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->de.high);
             break;
         }
         case 0x7B: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->de.low);
             break;
         }
         case 0x7C: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->hl.high);
             break;
         }
         case 0x7D: {
-            _cpu_load8(mem, &(cpu->af.high), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->af.high), cpu->hl.low);
             break;
         }
         case 0x7E: {
-            _cpu_load8(mem, &(cpu->af.high), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->af.high), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x40: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->bc.high);
             break;
         }
         case 0x41: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->bc.low);
             break;
         }
         case 0x42: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->de.high);
             break;
         }
         case 0x43: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->de.low);
             break;
         }
         case 0x44: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->hl.high);
             break;
         }
         case 0x45: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->hl.low);
             break;
         }
         case 0x46: {
-            _cpu_load8(mem, &(cpu->bc.high), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->bc.high), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x47: {
-            _cpu_load8(mem, &(cpu->bc.high), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->bc.high), cpu->af.high);
             break;
         }
         case 0x48: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->bc.high);
             break;
         }
         case 0x49: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->bc.low);
             break;
         }
         case 0x4A: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->de.high);
             break;
         }
         case 0x4B: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->de.low);
             break;
         }
         case 0x4C: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->hl.high);
             break;
         }
         case 0x4D: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->hl.low);
             break;
         }
         case 0x4E: {
-            _cpu_load8(mem, &(cpu->bc.low), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->bc.low), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x4F: {
-            _cpu_load8(mem, &(cpu->bc.low), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->bc.low), cpu->af.high);
             break;
         }
         case 0x50: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->bc.high);
             break;
         }
         case 0x51: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->bc.low);
             break;
         }
         case 0x52: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->de.high);
             break;
         }
         case 0x53: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->de.low);
             break;
         }
         case 0x54: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->hl.high);
             break;
         }
         case 0x55: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->hl.low);
             break;
         }
         case 0x56: {
-            _cpu_load8(mem, &(cpu->de.high), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->de.high), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x57: {
-            _cpu_load8(mem, &(cpu->de.high), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->de.high), cpu->af.high);
             break;
         }
         case 0x58: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->bc.high);
             break;
         }
         case 0x59: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->bc.low);
             break;
         }
         case 0x5A: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->de.high);
             break;
         }
         case 0x5B: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->de.low);
             break;
         }
         case 0x5C: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->hl.high);
             break;
         }
         case 0x5D: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->hl.low);
             break;
         }
         case 0x5E: {
-            _cpu_load8(mem, &(cpu->de.low), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->de.low), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x5F: {
-            _cpu_load8(mem, &(cpu->de.low), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->de.low), cpu->af.high);
             break;
         }
         case 0x60: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->bc.high);
             break;
         }
         case 0x61: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->bc.low);
             break;
         }
         case 0x62: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->de.high);
             break;
         }
         case 0x63: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->de.low);
             break;
         }
         case 0x64: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->hl.high);
             break;
         }
         case 0x65: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->hl.low);
             break;
         }
         case 0x66: {
-            _cpu_load8(mem, &(cpu->hl.high), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->hl.high), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x67: {
-            _cpu_load8(mem, &(cpu->hl.high), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->hl.high), cpu->af.high);
             break;
         }
         case 0x68: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->bc.high);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->bc.high);
             break;
         }
         case 0x69: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->bc.low);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->bc.low);
             break;
         }
         case 0x6A: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->de.high);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->de.high);
             break;
         }
         case 0x6B: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->de.low);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->de.low);
             break;
         }
         case 0x6C: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->hl.high);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->hl.high);
             break;
         }
         case 0x6D: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->hl.low);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->hl.low);
             break;
         }
         case 0x6E: {
-            _cpu_load8(mem, &(cpu->hl.low), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->hl.low), _cpu_read_hl_addr(cpu, mem));
             break;
         }
         case 0x6F: {
-            _cpu_load8(mem, &(cpu->hl.low), cpu->af.high);
+            _cpu_load8(cpu, &(cpu->hl.low), cpu->af.high);
             break;
         }
         case 0x70: {
             _cpu_write_hl_addr(cpu, mem, cpu->bc.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x71: {
             _cpu_write_hl_addr(cpu, mem, cpu->bc.low);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x72: {
             _cpu_write_hl_addr(cpu, mem, cpu->de.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x73: {
             _cpu_write_hl_addr(cpu, mem, cpu->de.low);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x74: {
             _cpu_write_hl_addr(cpu, mem, cpu->hl.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x75: {
             _cpu_write_hl_addr(cpu, mem, cpu->hl.low);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x77: {
             _cpu_write_hl_addr(cpu, mem, cpu->af.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x36: {
             _cpu_write_hl_addr(cpu, mem, _cpu_read_imm8(cpu, mem));
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x0A: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, cpu->bc.word));
-            _cpu_synchronize(mem, 4);
+            _cpu_load8(cpu, &(cpu->af.high), mem_read_cpu(mem, cpu->bc.word));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x1A: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, cpu->de.word));
-            _cpu_synchronize(mem, 4);
+            _cpu_load8(cpu, &(cpu->af.high), mem_read_cpu(mem, cpu->de.word));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xFA: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, _cpu_read_imm16(cpu, mem)));
-            _cpu_synchronize(mem, 4);
+            _cpu_load8(cpu, &(cpu->af.high), mem_read_cpu(mem, _cpu_read_imm16(cpu, mem)));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x3E: {
-            _cpu_load8(mem, &(cpu->af.high), _cpu_read_imm8(cpu, mem));
+            _cpu_load8(cpu, &(cpu->af.high), _cpu_read_imm8(cpu, mem));
             break;
         }
         case 0x02: {
             mem_write_cpu(mem, cpu->bc.word, cpu->af.high);
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x12: {
             mem_write_cpu(mem, cpu->de.word, cpu->af.high);
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0xEA: {
             mem_write_cpu(mem, _cpu_read_imm16(cpu, mem), cpu->af.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xF2: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, 0xFF00 + cpu->bc.low));
-            _cpu_synchronize(mem, 4);
+            _cpu_load8(cpu, &(cpu->af.high), mem_read_cpu(mem, 0xFF00 + cpu->bc.low));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xE2: {
             mem_write_cpu(mem, 0xFF00 + cpu->bc.low, cpu->af.high);
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
         }
         case 0x3A: {
-            _cpu_load8(mem, &(cpu->af.high), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->af.high), _cpu_read_hl_addr(cpu, mem));
             cpu->hl.word--;
             break;
         }
         case 0x32: {
             _cpu_write_hl_addr(cpu, mem, cpu->af.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             cpu->hl.word--;
             break;
         }
         case 0x2A: {
-            _cpu_load8(mem, &(cpu->af.high), _cpu_read_hl_addr(cpu, mem));
+            _cpu_load8(cpu, &(cpu->af.high), _cpu_read_hl_addr(cpu, mem));
             cpu->hl.word++;
             break;
         }
         case 0x22: {
             _cpu_write_hl_addr(cpu, mem, cpu->af.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             cpu->hl.word++;
             break;
         }
         case 0xE0: {
             mem_write_cpu(mem, 0xFF00 + _cpu_read_imm8(cpu, mem), cpu->af.high);
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0xF0: {
-            _cpu_load8(mem, &(cpu->af.high), mem_read_cpu(mem, 0xFF00 + _cpu_read_imm8(cpu, mem)));
-            _cpu_synchronize(mem, 4);
+            _cpu_load8(cpu, &(cpu->af.high), mem_read_cpu(mem, 0xFF00 + _cpu_read_imm8(cpu, mem)));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x01: {
-            _cpu_load16(mem, &(cpu->bc.word), _cpu_read_imm16(cpu, mem));
-            _cpu_synchronize(mem, 4);
+            _cpu_load16(cpu, &(cpu->bc.word), _cpu_read_imm16(cpu, mem));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x11: {
-            _cpu_load16(mem, &(cpu->de.word), _cpu_read_imm16(cpu, mem));
-            _cpu_synchronize(mem, 4);
+            _cpu_load16(cpu, &(cpu->de.word), _cpu_read_imm16(cpu, mem));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x21: {
-            _cpu_load16(mem, &(cpu->hl.word), _cpu_read_imm16(cpu, mem));
-            _cpu_synchronize(mem, 4);
+            _cpu_load16(cpu, &(cpu->hl.word), _cpu_read_imm16(cpu, mem));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x31: {
-            _cpu_load16(mem, &(cpu->sp), _cpu_read_imm16(cpu, mem));
-            _cpu_synchronize(mem, 4);
+            _cpu_load16(cpu, &(cpu->sp), _cpu_read_imm16(cpu, mem));
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xF9: {
-            _cpu_load16(mem, &(cpu->sp), cpu->hl.word);
-            _cpu_synchronize(mem, 4);
+            _cpu_load16(cpu, &(cpu->sp), cpu->hl.word);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xF8: {
-            _cpu_load16(mem, &(cpu->hl.word), cpu->sp + (int8_t)(_cpu_read_imm8(cpu, mem)));
+            _cpu_load16(cpu, &(cpu->hl.word), cpu->sp + (int8_t)(_cpu_read_imm8(cpu, mem)));
 
             flags->byte = 0;
             flags->c = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xFF) < (cpu->sp & 0xFF));
             flags->h = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xF) < (cpu->sp & 0xF));
 
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x08: {
             mem_write_cpu(mem, _cpu_read_imm16(cpu, mem), cpu->sp & 0xFF);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             cpu->last_imm16++;
             mem_write_cpu(mem, cpu->last_imm16, (cpu->sp & 0xFF00) >> 8);
-            _cpu_synchronize(mem, 12);
+            _cpu_synchronize(cpu, 12);
             break;
         }
         case 0xF5: {
             _cpu_stack_push(cpu, mem, cpu->af.word);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xC5: {
             _cpu_stack_push(cpu, mem, cpu->bc.word);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xD5: {
             _cpu_stack_push(cpu, mem, cpu->de.word);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xE5: {
             _cpu_stack_push(cpu, mem, cpu->hl.word);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xF1: {
-            _cpu_load16(mem, &(cpu->af.word), _cpu_stack_pop(cpu, mem));
+            _cpu_load16(cpu, &(cpu->af.word), _cpu_stack_pop(cpu, mem));
             cpu->af.low &= 0xF0;
             break;
         }
         case 0xC1: {
-            _cpu_load16(mem, &(cpu->bc.word), _cpu_stack_pop(cpu, mem));
+            _cpu_load16(cpu, &(cpu->bc.word), _cpu_stack_pop(cpu, mem));
             break;
         }
         case 0xD1: {
-            _cpu_load16(mem, &(cpu->de.word), _cpu_stack_pop(cpu, mem));
+            _cpu_load16(cpu, &(cpu->de.word), _cpu_stack_pop(cpu, mem));
             break;
         }
         case 0xE1: {
-            _cpu_load16(mem, &(cpu->hl.word), _cpu_stack_pop(cpu, mem));
+            _cpu_load16(cpu, &(cpu->hl.word), _cpu_stack_pop(cpu, mem));
             break;
         }
         case 0x80: {
@@ -1575,7 +1575,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
             _cpu_inc8(cpu, mem, &thing_at_hl);
             _cpu_write_hl_addr(cpu, mem, thing_at_hl);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x3C: {
@@ -1610,7 +1610,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             uint8_t thing_at_hl = _cpu_read_hl_addr(cpu, mem);
             _cpu_dec8(cpu, mem, &thing_at_hl);
             _cpu_write_hl_addr(cpu, mem, thing_at_hl);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x3D: {
@@ -1623,47 +1623,47 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             flags->c = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xFF) < (cpu->sp & 0xFF));
             flags->h = (((cpu->sp + (int8_t)(cpu->last_imm8)) & 0xF) < (cpu->sp & 0xF));
 
-            _cpu_synchronize(mem, 12);
+            _cpu_synchronize(cpu, 12);
             break;
         }
         case 0x03: {
             cpu->bc.word++;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x13: {
             cpu->de.word++;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x23: {
             cpu->hl.word++;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x33: {
             cpu->sp++;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x0B: {
             cpu->bc.word--;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x1B: {
             cpu->de.word--;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x2B: {
             cpu->hl.word--;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0x3B: {
             cpu->sp--;
-            _cpu_synchronize(mem, 8);
+            _cpu_synchronize(cpu, 8);
             break;
         }
         case 0xCB: {
@@ -1692,7 +1692,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             flags->h = 0;
             flags->c = (extended >= 0x0100) ? 1 : 0;
             cpu->af.high = extended & 0xFF;
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x2F: {
@@ -1700,47 +1700,47 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
             flags->h = 1;
 
             cpu->af.high = ~(cpu->af.high);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x3F: {
             flags->n = 0;
             flags->h = 0;
             flags->c = !(flags->c);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x37: {
             flags->n = 0;
             flags->h = 0;
             flags->c = 1;
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x00: {
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x76: {
             cpu->halted = true;
             cpu->halt_bug = (!cpu->ime && (mem_read_cpu(mem, 0xFF0F) & mem_read_cpu(mem, 0xFFFF)));
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x10: {
             _cpu_stop(cpu, mem);
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xF3: {
             cpu->ime = false;
             cpu->ei_state = ARMSTATE_NOT_ARMED;
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0xFB: {
             cpu->ei_state = ARMSTATE_ARMED;
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x07: {
@@ -1785,7 +1785,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
         }
         case 0xE9: {
             cpu->pc = cpu->hl.word;
-            _cpu_synchronize(mem, 4);
+            _cpu_synchronize(cpu, 4);
             break;
         }
         case 0x18: {
@@ -1918,7 +1918,7 @@ void cpu_step(cpu_state_t* cpu, memory_t* mem) {
 
         if (int_flag.byte & int_enable.byte) {
             _cpu_stack_push(cpu, mem, cpu->pc);
-            _cpu_synchronize(mem, 12);
+            _cpu_synchronize(cpu, 12);
 
             if (int_flag.vblank && int_enable.vblank) {
                 int_flag.vblank = false;

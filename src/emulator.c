@@ -1,11 +1,17 @@
 #include "emulator.h"
 #include "stdlib.h"
 
+void _fluffy_emu_synchronize(void* emu_ptr, uint16_t cycles) {
+    fluffy_emu_state_t* emu = (fluffy_emu_state_t*)emu_ptr;
+}
+
 fluffy_emu_state_t* fluffy_emu_create() {
     cpu_state_t* cpu = calloc(1, sizeof(cpu_state_t));
 
     fluffy_emu_state_t* emu = calloc(1, sizeof(fluffy_emu_state_t));
     emu->cpu = cpu;
+    emu->cpu->emu_struct_ptr = emu;
+    emu->cpu->synchronize = &_fluffy_emu_synchronize;
 
     return emu;
 }

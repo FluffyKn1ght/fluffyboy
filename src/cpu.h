@@ -41,6 +41,8 @@ typedef struct {
     cpu_disassembly_t inst_disasm;
     uint8_t last_imm8;
     uint16_t last_imm16;
+    void(*synchronize)(void*, uint16_t);
+    void* emu_struct_ptr;
 } cpu_state_t;
 
 cpu_state_t* cpu_create();
