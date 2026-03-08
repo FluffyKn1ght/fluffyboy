@@ -22,7 +22,6 @@ typedef union {
     obj_size: 1,
     obj_enable: 1,
     bg_enable: 1;
-
     uint8_t byte;
 } lcdc_register_t;
 
