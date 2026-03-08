@@ -2,10 +2,12 @@
 #define _EMULATOR_H
 
 #include "cpu.h"
+#include "ppu.h"
 
 typedef struct {
     memory_t* memory;
     cpu_state_t* cpu;
+    ppu_state_t* ppu;
 } fluffy_emu_state_t;
 
 typedef enum: uint8_t {
