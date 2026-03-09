@@ -3,7 +3,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-uint8_t _mem_read_io(memory_t* mem, uint16_t address) {
+uint8_t _mem_read_io(memory_t* mem, uint8_t address) {
+    // TODO: Implement
+
+    return 0;
+}
+
+uint8_t _mem_write_io(memory_t* mem, uint8_t address, uint8_t value) {
     // TODO: Implement
 
     return 0;
@@ -62,23 +68,55 @@ uint8_t mem_read(memory_t* mem, uint16_t address) {
             return ((address & 0xF0) | ((address & 0xF0) >> 4));
         }
     } else if ((0xFF00 <= address) && (address <= 0xFF7F)) {
-        return _mem_read_io(mem, address);
+        // MMIO
+        return _mem_read_io(mem, address & 0xFF);
     } else if ((0xFF80 <= address) && (address <= 0xFFFE)) {
+        // HRAM
         return (*((uint8_t*)(mem->high_ram + (address - 0xFF80))));
     } else if (address == 0xFFFF) {
+        // IE
         return mem->int_enable;
     }
     return 0xFF;
 }
 
 uint16_t mem_readw(memory_t* mem, uint16_t address) {
-    // TODO: Implement
-    return 0;
+    uint8_t lower_byte = mem_read(mem, address);
+    uint8_t upper_byte = mem_read(mem, address+1);
+
+    return lower_byte | (upper_byte << 8);
 }
 
 void mem_write(memory_t* mem, uint16_t address, uint8_t value) {
-    // TODO: Implement
-    return;
+    if ((0x0000 <= address) && (address <= 0x7FFF)) {
+        // ROM
+        cart_write(mem->cart, address, value);
+    } else if ((0x8000 <= address) && (address <= 0x9FFF)) {
+        // VRAM
+        *((uint8_t*)(mem->video_ram + (address - 0x8000))) = value;
+    } else if ((0xA000 <= address) && (address <= 0xBFFF)) {
+        // SRAM
+        cart_write(mem->cart, address, value);
+    } else if ((0xC000 <= address) && (address <= 0xDFFF)) {
+        // WRAM
+        *((uint8_t*)(mem->work_ram + (address - 0xC000))) = value;
+    } else if ((0xE000 <= address) && (address <= 0xFDFF)) {
+        // Echo RAM (mirror of WRAM)
+        *((uint8_t*)(mem->work_ram + (address - 0xE000))) = value;
+    } else if ((0xFE00 <= address) && (address <= 0xFE9F)) {
+        // OAM
+        *((uint8_t*)(mem->oam + (address - 0xFE00))) = value;
+    } else if ((0xFEA0 <= address) && (address <= 0xFEFF)) {
+        // Unusable memory space
+        // TODO: This should trigger OAM corruption
+        return;
+    } else if ((0xFF00 <= address) && (address <= 0xFF7F)) {
+        _mem_write_io(mem, address, value);
+    } else if ((0xFF80 <= address) && (address <= 0xFFFE)) {
+        *((uint8_t*)(mem->high_ram + (address - 0xFF80))) = value;
+    } else if (address == 0xFFFF) {
+        mem->int_enable = value;
+    }
 }
 
 uint8_t mem_read_cpu(memory_t* mem, uint16_t address) {
@@ -113,29 +151,62 @@ uint8_t mem_read_cpu(memory_t* mem, uint16_t address) {
         if (mem->oam_locked) {
             return 0xFF;
         } else {
-            // From Pan Docs: "On CGB revision E, AGB, AGS, and GBP, it returns the high
-            // nibble of the lower address byte twice, e.g. FFAx returns $AA, FFBx returns
-            // $BB, and so forth."
             return ((address & 0xF0) | ((address & 0xF0) >> 4));
         }
     } else if ((0xFF00 <= address) && (address <= 0xFF7F)) {
-        return _mem_read_io(mem, address);
+        // MMIO
+        return _mem_read_io(mem, address & 0xFF);
     } else if ((0xFF80 <= address) && (address <= 0xFFFE)) {
+        // HRAM
         return (*((uint8_t*)(mem->high_ram + (address - 0xFF80))));
     } else if (address == 0xFFFF) {
+        // IE
         return mem->int_enable;
     }
     return 0xFF;
 }
 
 uint16_t mem_readw_cpu(memory_t* mem, uint16_t address) {
-    // TODO: Implement
-    return 0;
+    uint8_t lower_byte = mem_read_cpu(mem, address);
+    uint8_t upper_byte = mem_read_cpu(mem, address+1);
+
+    return lower_byte | (upper_byte << 8);
 }
 
 void mem_write_cpu(memory_t* mem, uint16_t address, uint8_t value) {
-    // TODO: Implement
-    return;
+    if ((0x0000 <= address) && (address <= 0x7FFF)) {
+        // ROM
+        cart_write(mem->cart, address, value);
+    } else if ((0x8000 <= address) && (address <= 0x9FFF)) {
+        // VRAM
+        if (!mem->vram_locked) {
+            *((uint8_t*)(mem->video_ram + (address - 0x8000))) = value;
+        }
+    } else if ((0xA000 <= address) && (address <= 0xBFFF)) {
+        // SRAM
+        cart_write(mem->cart, address, value);
+    } else if ((0xC000 <= address) && (address <= 0xDFFF)) {
+        // WRAM
+        *((uint8_t*)(mem->work_ram + (address - 0xC000))) = value;
+    } else if ((0xE000 <= address) && (address <= 0xFDFF)) {
+        // Echo RAM (mirror of WRAM)
+        *((uint8_t*)(mem->work_ram + (address - 0xE000))) = value;
+    } else if ((0xFE00 <= address) && (address <= 0xFE9F)) {
+        // OAM
+        if (!mem->oam_locked) {
+            *((uint8_t*)(mem->oam + (address - 0xFE00))) = value;
+        }
+    } else if ((0xFEA0 <= address) && (address <= 0xFEFF)) {
+        // Unusable memory space
+        // TODO: This should trigger OAM corruption
+        return;
+    } else if ((0xFF00 <= address) && (address <= 0xFF7F)) {
+        _mem_write_io(mem, address, value);
+    } else if ((0xFF80 <= address) && (address <= 0xFFFE)) {
+        *((uint8_t*)(mem->high_ram + (address - 0xFF80))) = value;
+    } else if (address == 0xFFFF) {
+        mem->int_enable = value;
+    }
 }
 
 interrupt_register_t mem_get_intflag(memory_t* mem) {
