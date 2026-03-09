@@ -6,6 +6,7 @@ DEBUG ?= 0
 
 SOURCES := $(shell find $(SRC_DIR) -name "*.c")
 OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(BIN_DIR)/%.o,$(SOURCES))
+LIBRARIES := $(shell pkgconf --libs sdl3)
 
 CFLAGS :=
 LDFLAGS :=
@@ -19,7 +20,7 @@ $(BIN_DIR)/%.o: $(SRC_DIR)/%.c
 	gcc -c $^ $(CFLAGS) -o $@
 
 $(TARGET): $(OBJECTS)
-	gcc $^ $(LDFLAGS) -o $@
+	gcc $^ $(LDFLAGS) $(LIBRARIES) -o $@
 
 all: $(TARGET)
 
