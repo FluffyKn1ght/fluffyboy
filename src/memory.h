@@ -7,6 +7,14 @@
 
 typedef struct {
     cartridge_t* cart;
+    void* video_ram;
+    void* work_ram;
+    void* high_ram;
+    void* oam;
+    void* mmio;
+    bool vram_locked;
+    bool oam_locked;
+    uint8_t int_enable;
 } memory_t;
 
 memory_t* mem_create(cartridge_t* cart);

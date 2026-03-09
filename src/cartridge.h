@@ -90,5 +90,7 @@ typedef struct {
 cartridge_t* cart_open_file(char* path);
 void cart_destroy(cartridge_t* cart);
 cart_sram_specs_t cart_get_sram_specs(cart_header_t* header);
+uint8_t cart_read(cartridge_t* cart, uint16_t address);
+void cart_write(cartridge_t* cart, uint16_t address, uint8_t value);
 
 #endif
