@@ -64,7 +64,7 @@ This project uses code from the following works:
 
 Also, while not including their code directly, this project relies (partially/fully) on the following works:
 
-- [SDL3](https://libsdl.org/) (zlib license) - Frontend abstractions
+- [**SDL3** by libsdl-org](https://libsdl.org/) (zlib license) - Frontend abstractions
 
 # License
 
