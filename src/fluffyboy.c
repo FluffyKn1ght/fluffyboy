@@ -6,11 +6,11 @@
 
 int _run_emulator(fluffy_emu_state_t* emu) {
     printf("INFO: ROM name: '%s'\n", emu->memory->cart->header->title);
-    printf("INFO: ROM size: %d banks (%d KiB)\n", 1 << (1 + emu->memory->cart->header->rom_banks), 32 * (1 << (1 + emu->memory->cart->header->rom_banks)));
+    printf("INFO: ROM size: %d banks (%d KiB)\n", 1 << (1 + emu->memory->cart->header->rom_banks), 32 * (1 << (emu->memory->cart->header->rom_banks)));
 
     cart_sram_specs_t sram_specs = cart_get_sram_specs(emu->memory->cart->header);
     if (sram_specs.ram_banks) {
-        printf("INFO: SRAM size: %d MiB", sram_specs.ram_banks * 8);
+        printf("INFO: SRAM size: %d KiB", sram_specs.ram_banks * 8);
 
         if (sram_specs.battery) {
             printf("; battery-backed");
