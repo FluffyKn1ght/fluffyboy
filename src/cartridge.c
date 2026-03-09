@@ -1,4 +1,6 @@
 #include "cartridge.h"
+#include "mappers/rom.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +24,26 @@ uint8_t _cart_sram_id_to_banks(uint8_t sram_id) {
     }
 }
 
+bool _cart_setup_mapper(cartridge_t* cart, cart_header_t* header) {
+    mapper_state_t* mapper = calloc(1, sizeof(mapper_state_t));
+    cart->mapper = mapper;
+
+    switch (header->cart_type) {
+        case CART_TYPE_ROM_ONLY:
+        case CART_TYPE_ROM_RAM:
+        case CART_TYPE_ROM_RAM_BATTERY: {
+            cart->mapper_read = &mapper_rom_read;
+            cart->mapper_write = &mapper_rom_write;
+            return true;
+        }
+        default: {
+            free(cart->mapper);
+            cart->mapper = NULL;
+            return false;
+        }
+    }
+}
+
 cartridge_t* cart_open_file(char* path) {
     FILE* cart_file = fopen(path, "r" BINARY);
 
@@ -38,6 +60,7 @@ cartridge_t* cart_open_file(char* path) {
         // File too short
         fclose(cart_file);
         printf("ERROR: '%s' is not a valid GameBoy ROM image - file way too short", path);
+        free(cart);
         return NULL;
     };
 
@@ -49,6 +72,7 @@ cartridge_t* cart_open_file(char* path) {
 
         fclose(cart_file);
         printf("ERROR: '%s' is not a valid GameBoy ROM image - Nintendo logo does not match\n", path);
+        free(cart);
         return NULL;
     }
 
@@ -60,10 +84,20 @@ cartridge_t* cart_open_file(char* path) {
     if (header_sum != header.header_sum) {
         fclose(cart_file);
         printf("ERROR: '%s' is not a valid GameBoy ROM image - header checksum does not match (expected 0x%X, got 0x%X instead)\n", path, header_sum, header.header_sum);
+        free(cart);
         return NULL;
     }
 
     // TODO: Warn on global checksum mismatch?
+
+    bool mapper_ok = _cart_setup_mapper(cart, &header);
+    if (!mapper_ok) {{
+        fclose(cart_file);
+        printf("ERROR: ROM image '%s' uses an unsupported mapper chip with ID 0x%X\n", path, header.cart_type);
+        free(cart->mapper);
+        free(cart);
+        return NULL;
+    }}
 
     fseek(cart_file, 0x0, SEEK_SET);
     unsigned char* rom_data_ptr = calloc(1 + (1 << header.rom_banks), 0x4000);
@@ -71,13 +105,14 @@ cartridge_t* cart_open_file(char* path) {
 
     cart_sram_specs_t sram_specs = cart_get_sram_specs(&header);
     if (sram_specs.ram_banks > 0) {
+        cart->sram_fname = malloc(strlen(path) + 5);
+
         unsigned char* sram_data_ptr = calloc(sram_specs.ram_banks, 0x2000);
 
         if (sram_specs.battery) {
-            char* sram_fname = malloc(strlen(path) + 5);
-            sprintf(sram_fname, "%s.sav", path);
+            sprintf(cart->sram_fname, "%s.sav", path);
 
-            FILE* sram_file = fopen(sram_fname, "r" BINARY);
+            FILE* sram_file = fopen(cart->sram_fname, "r" BINARY);
             if (sram_file) {
                 fread(sram_data_ptr, 0x2000, sram_specs.ram_banks, sram_file);
                 fclose(sram_file);
@@ -95,10 +130,22 @@ cartridge_t* cart_open_file(char* path) {
 }
 
 void cart_destroy(cartridge_t* cart) {
-    // TODO: Save battery-backed SRAM to disk
+    cart_sram_specs_t sram_specs = cart_get_sram_specs(cart->header);
+
+    if (sram_specs.battery) {
+        // TODO: Save RTC state
+
+        FILE* sram_file = fopen(cart->sram_fname, "w" BINARY);
+        if (sram_file) {
+            fwrite(cart->sram_data, sram_specs.ram_banks, 0x2000, sram_file);
+            fclose(sram_file);
+        } else {
+            printf("WARN: could not save SRAM/RTC state to disk\n");
+        }
+    }
 
     free(cart->rom_data);
-    //free(cart->sram_data);
+    free(cart->sram_data);
     free(cart);
 }
 
@@ -132,4 +179,12 @@ cart_sram_specs_t cart_get_sram_specs(cart_header_t* header) {
     }
 
     return specs;
+}
+
+uint8_t cart_read(cartridge_t* cart, uint16_t address) {
+    return cart->mapper_read(cart, address);
+}
+
+void cart_write(cartridge_t* cart, uint16_t address, uint8_t value) {
+    cart->mapper_write(cart, address, value);
 }

@@ -74,11 +74,20 @@ typedef union {
 } cart_header_t;
 
 typedef struct {
+    uint8_t rom_bank;
+    uint8_t sram_bank;
+} mapper_state_t;
+
+typedef struct {
     union {
         cart_header_t* header;
         unsigned char* rom_data;
     };
     unsigned char* sram_data;
+    char* sram_fname;
+    mapper_state_t* mapper;
+    uint8_t(*mapper_read)(void*, uint16_t);
+    void(*mapper_write)(void*, uint16_t, uint8_t);
 } cartridge_t;
 
 typedef struct {
