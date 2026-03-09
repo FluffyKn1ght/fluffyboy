@@ -64,6 +64,8 @@ int _run_emulator(fluffy_emu_state_t* emu) {
     }
 
     SDL_FRect srcrect = {0, 0, 160, 144};
+    // TODO: Scale and position dstrect according to window size
+    // TODO: Make sure nearest neighbour filtering is used!
     SDL_FRect dstrect = {0, 0, 160, 144};
 
     SDL_ShowWindow(window);
