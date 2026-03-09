@@ -33,7 +33,7 @@ fluffyboy ROMFILE
 > [!IMPORTANT]
 > It is highly recommended to use Linux to build the emulator, Windows support is currently **NOT guranteed**.
 
-# Prerequisites
+## Prerequisites
 
 You will need the following tools:
 - `gcc` to compile the code
@@ -42,7 +42,7 @@ You will need the following tools:
 You will also need the following libraries:
 - `SDL3` (if using built-in frontend (`src/fluffyboy.c`))
 
-# Building the binary
+## Building the binary
 
 1. Clone the repository:
 
